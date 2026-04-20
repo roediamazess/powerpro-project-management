@@ -1,0 +1,46 @@
+# --- ENV ---
+.env
+.env.local
+.env.*.local
+
+# --- NODE ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+dist-ssr/
+*.local
+
+# --- PYTHON ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- BACKEND ---
+*.log
+
+# --- DATA ---
+data_import/data/
+*.sqlite
+*.db
+
+# --- BACKUPS ---
+.backups/

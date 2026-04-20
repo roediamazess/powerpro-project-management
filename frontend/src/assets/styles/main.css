@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #f0fdf4;
+  --color-brand-100: #dcfce7;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  
+  --color-accent-cyan: #0ea5e9;
+  --color-accent-emerald: #10b981;
+  --color-accent-teal: #14b8a6;
+  
+  --color-surface-50: #f8fafc;
+  --color-surface-400: #94a3b8;
+  --color-surface-500: #64748b;
+  --color-surface-600: #475569;
+  --color-surface-700: #334155;
+  --color-surface-800: #1e293b;
+  --color-surface-900: #0f172a;
+  --color-surface-950: #020617;
+  
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  /* Semantic Mappings */
+  --color-bg-app: var(--bg-app);
+  --color-bg-card: var(--bg-card);
+  --color-border-app: var(--border-app);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+}
+
+@layer base {
+  :root {
+    --brand-primary: 161 72% 48%; /* Emerald 500 */
+    --brand-secondary: 199 89% 48%; /* Cyan 500 */
+    
+    /* Semantic Dark (Default) */
+    --bg-app: var(--color-surface-950);
+    --bg-card: rgba(15, 23, 42, 0.4);
+    --text-primary: #ffffff;
+    --text-secondary: var(--color-surface-400);
+    --border-app: rgba(30, 41, 59, 0.5);
+    --glass-tint: rgba(255, 255, 255, 0.05);
+  }
+
+  :root.light {
+    --bg-app: #f1f5f9; /* Soft slate background */
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-app: rgba(148, 163, 184, 0.3);
+    --glass-tint: rgba(0, 0, 0, 0.01);
+  }
+
+  * {
+    border-color: var(--border-app);
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    @apply font-sans antialiased selection:bg-accent-emerald/30;
+    font-family: 'Outfit', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer components {
+  /* Mesh Gradient Elements */
+  .mesh-blob {
+    @apply absolute rounded-full blur-[100px] opacity-[0.15] dark:opacity-20 transition-all duration-1000 animate-pulse;
+  }
+
+  .mesh-1 { @apply w-[600px] h-[600px] bg-accent-emerald -top-[20%] -left-[10%]; animation-delay: 0s; }
+  .mesh-2 { @apply w-[500px] h-[500px] bg-accent-cyan -bottom-[10%] -right-[5%]; animation-delay: 2s; }
+  .mesh-3 { @apply w-[400px] h-[400px] bg-accent-teal top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2; animation-delay: 4s; }
+
+  /* Advanced Glassmorphism */
+  .glass-card {
+    background-color: var(--bg-card);
+    @apply backdrop-blur-2xl border rounded-[32px] p-8 
+           shadow-[0_20px_50px_rgba(0,0,0,0.1)] relative overflow-hidden;
+    background-image: linear-gradient(135deg, var(--glass-tint) 0%, transparent 100%);
+    transition: all 0.3s ease;
+  }
+
+  .glass-card::before {
+    content: '';
+    @apply absolute inset-0 -z-10 opacity-20;
+    background: radial-gradient(circle at top left, var(--color-accent-emerald), transparent 40%);
+  }
+
+  .glass {
+    background-color: var(--bg-card);
+    @apply backdrop-blur-xl border-border-app;
+    background-image: linear-gradient(135deg, var(--glass-tint) 0%, transparent 100%);
+    transition: all 0.3s ease;
+  }
+
+  /* Premium Buttons */
+  .btn-primary {
+    @apply relative h-12 w-full overflow-hidden rounded-2xl bg-gradient-to-r from-accent-emerald to-accent-cyan 
+           flex items-center justify-center font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.3)] transition-all duration-300
+           hover:shadow-[0_12px_30px_rgba(16,185,129,0.4)] hover:-translate-y-0.5 active:scale-[0.98]
+           disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none;
+  }
+
+  .btn-primary::after {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+  }
+
+  .btn-primary:hover::after {
+    @apply opacity-100;
+    animation: shine 1.5s infinite;
+  }
+
+  /* Input Styling */
+  .input-group {
+    @apply relative space-y-2;
+  }
+
+  .premium-input {
+    background-color: var(--glass-tint);
+    @apply w-full border border-border-app rounded-2xl py-4 px-12 
+           focus:outline-none focus:border-accent-emerald/50 
+           focus:ring-2 focus:ring-accent-emerald/20 transition-all duration-300;
+    color: var(--text-primary);
+  }
+
+  .premium-input::placeholder {
+    @apply text-surface-500 opacity-50;
+  }
+
+  .input-label {
+    @apply absolute left-12 top-1/2 -translate-y-1/2 text-surface-500 transition-all duration-300 pointer-events-none;
+  }
+
+  .premium-input:focus ~ .input-label,
+  .premium-input:not(:placeholder-shown) ~ .input-label {
+    background-color: var(--bg-app);
+    @apply -top-2 left-4 text-xs text-accent-emerald px-2 rounded-md scale-90 -translate-y-0 shadow-sm;
+  }
+
+  .input-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-500 transition-colors duration-300;
+  }
+
+  .premium-input:focus ~ .input-icon {
+    @apply text-accent-emerald;
+  }
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-emerald to-accent-cyan;
+  }
+
+  .glow-emerald {
+    @apply shadow-[0_0_30px_rgba(16,185,129,0.2)];
+  }
+
+  /* Partner Modal Custom Fields */
+  .premium-input-field {
+    @apply w-full border rounded-2xl py-3 px-5 transition-all duration-300;
+    background-color: var(--bg-card);
+    border-color: var(--border-app);
+    color: var(--text-primary);
+    -webkit-appearance: none;
+  }
+
+  .premium-input-field:focus {
+    @apply outline-none ring-4;
+    border-color: var(--color-accent-emerald);
+    --tw-ring-color: rgba(16, 185, 129, 0.1);
+  }
+
+  .dark .premium-input-field {
+    @apply bg-surface-950/30 border-white/5;
+  }
+
+  select.premium-input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.25rem;
+  }
+
+  .dark select.premium-input-field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  }
+}
