@@ -13,12 +13,14 @@ interface Toast {
 interface UIState {
   toasts: Toast[]
   theme: Theme
+  globalSearch: string
 }
 
 export const useUIStore = defineStore('ui', {
   state: (): UIState => ({
     toasts: [],
-    theme: (localStorage.getItem('theme') as Theme) || 'dark',
+     theme: (localStorage.getItem('theme') as Theme) || 'dark',
+    globalSearch: '',
   }),
 
   actions: {
@@ -52,5 +54,10 @@ export const useUIStore = defineStore('ui', {
     removeToast(id: string) {
       this.toasts = this.toasts.filter((t) => t.id !== id)
     },
+    
+    setGlobalSearch(query: string) {
+      this.globalSearch = query
+      console.log('Global search updated:', this.globalSearch)
+    }
   },
 })

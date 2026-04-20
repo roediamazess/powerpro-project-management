@@ -6,6 +6,7 @@ import {
   RowAutoHeightModule,
   TextFilterModule,
   NumberFilterModule,
+  QuickFilterModule,
   ValidationModule 
 } from 'ag-grid-community'
 
@@ -14,11 +15,12 @@ ModuleRegistry.registerModules([
   RowAutoHeightModule,
   TextFilterModule,
   NumberFilterModule,
+  QuickFilterModule,
   ValidationModule
 ])
 
 import { useUIStore } from '../../store/ui'
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
 
 interface Props {
   rowData: any[]
@@ -39,30 +41,57 @@ const onRowClicked = (params: any) => emit('rowClicked', params)
 const onRowDoubleClicked = (params: any) => emit('rowDoubleClicked', params)
 const onCellClicked = (params: any) => emit('cellClicked', params)
 
-const gridTheme = 'ag-theme-alpine' // We use the same base theme and override variables via CSS
+const gridTheme = 'ag-theme-alpine'
 
 const defaultColDef = {
   sortable: true,
   filter: true,
   resizable: true,
   flex: 1,
+  wrapText: true,
+  autoHeight: true,
 }
+
+const gridApi = ref<any>(null)
+
+const onGridReady = (params: any) => {
+  gridApi.value = params.api
+  // Apply any initial filter text
+  if (props.quickFilterText) {
+    gridApi.value.setGridOption('quickFilterText', props.quickFilterText)
+  }
+}
+
+// Watch for changes and use the v35 correct API
+watch(() => props.quickFilterText, (newVal) => {
+  if (gridApi.value) {
+    gridApi.value.setGridOption('quickFilterText', newVal ?? '')
+  }
+}, { immediate: false })
 </script>
 
 <template>
-  <div :class="[gridTheme, uiStore.theme, 'w-full rounded-2xl overflow-hidden border border-surface-200 dark:border-surface-800/50 dark:bg-surface-900']" :style="{ height: props.height }">
-    <ag-grid-vue
-      class="h-full w-full"
-      :rowData="props.rowData"
-      :columnDefs="props.columnDefs"
-      :defaultColDef="defaultColDef"
-      :quickFilterText="props.quickFilterText"
-      :animateRows="true"
-      :rowHeight="64"
-      @row-clicked="onRowClicked"
-      @row-double-clicked="onRowDoubleClicked"
-      @cell-clicked="onCellClicked"
-    />
+  <div class="w-full flex flex-col gap-1" :style="{ height: props.height }">
+    <!-- Debug indicator - shows when search text is received -->
+    <div v-if="props.quickFilterText" class="text-[10px] font-bold text-accent-cyan uppercase tracking-widest px-1 pb-1">
+      Searching: "{{ props.quickFilterText }}"
+    </div>
+    <div 
+      :class="[gridTheme, uiStore.theme]"
+      class="flex-1 rounded-2xl overflow-hidden border border-surface-200 dark:border-surface-800/50 dark:bg-surface-900"
+    >
+      <ag-grid-vue
+        class="h-full w-full"
+        :rowData="props.rowData"
+        :columnDefs="props.columnDefs"
+        :defaultColDef="defaultColDef"
+        :animateRows="true"
+        @grid-ready="onGridReady"
+        @row-clicked="onRowClicked"
+        @row-double-clicked="onRowDoubleClicked"
+        @cell-clicked="onCellClicked"
+      />
+    </div>
   </div>
 </template>
 
@@ -77,19 +106,30 @@ const defaultColDef = {
   --ag-row-hover-color: #f1f5f9;
   --ag-selected-row-background-color: #f1f5f9;
   --ag-odd-row-background-color: #fafafa;
+  --ag-cell-horizontal-border: solid #e2e8f0;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-separator-width: 1px;
+  --ag-header-column-separator-color: #cbd5e1;
 }
 
 /* Dark Mode Overrides */
 .dark.ag-theme-alpine {
   --ag-background-color: #0f172a !important; 
-  --ag-header-background-color: #1e293b;
-  --ag-header-foreground-color: #94a3b8;
+  --ag-header-background-color: #0f1f3d !important;
+  --ag-header-foreground-color: #e2e8f0 !important;
   --ag-foreground-color: #f1f5f9;
   --ag-border-color: #1e293b;
   --ag-row-hover-color: #1e293b;
   --ag-selected-row-background-color: #1e293b;
   --ag-odd-row-background-color: #111827;
   --ag-control-panel-background-color: #0f172a;
+  --ag-header-column-separator-color: rgba(99,182,255,0.15);
+  --ag-header-column-resize-handle-color: rgba(99,182,255,0.3);
+  --ag-cell-horizontal-border: solid rgba(30, 41, 59, 0.8);
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-separator-width: 1px;
 }
 
 .dark.ag-theme-alpine .ag-root-wrapper,
@@ -102,11 +142,42 @@ const defaultColDef = {
 }
 
 .dark.ag-theme-alpine .ag-header {
-  background-color: #1e293b !important;
+  background-color: #0f1f3d !important;
+  border-bottom: 2px solid rgba(6, 182, 212, 0.3) !important;
+}
+
+.dark.ag-theme-alpine .ag-header-cell-text {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.dark.ag-theme-alpine .ag-icon {
+  color: #64748b !important;
 }
 
 .ag-root-wrapper {
   border: none !important;
+}
+
+/* Vertical column separator — Light Mode */
+.ag-theme-alpine .ag-cell {
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid #cbd5e1 !important;
+}
+
+/* Vertical column separator — Dark Mode */
+.dark.ag-theme-alpine .ag-cell {
+  border-right: 1px solid rgba(30, 41, 59, 0.9) !important;
+}
+
+.dark.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid rgba(99, 182, 255, 0.12) !important;
 }
 
 /* AG Grid Filter/Popup Customization */
@@ -123,9 +194,8 @@ const defaultColDef = {
   padding: 8px 0 !important;
 }
 
-/* Fix for the overlapping search icon and placeholder */
 .ag-filter-wrapper input {
-  padding-left: 36px !important; /* Move only the text to the right */
+  padding-left: 36px !important;
   width: 100% !important;
   background-color: rgba(255, 255, 255, 0.03) !important;
   border: 1px solid var(--border-app) !important;

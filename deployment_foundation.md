@@ -89,7 +89,121 @@ Menghilangkan celah ketidakcocokan data antara Frontend dan Backend:
 1.  **Auto-Type Generation:** Menggunakan **OpenAPI Typescript Codegen**. Setiap kali ada perubahan skema Pydantic di FastAPI, AI akan men-*trigger* pembuatan ulang API Client di Vue 3 secara otomatis.
 2.  **Zero-Drift Policy:** Menjamin data yang dikirim Backend selalu sesuai dengan harapan komponen Frontend tanpa pengecekan manual.
 
+## 11. Aturan Teknis AG Grid v35 (Critical — Jangan Dilanggar)
+
+AG Grid versi 35 (yang digunakan proyek ini) memiliki **perubahan API yang bersifat breaking change** dibandingkan versi sebelumnya. Semua pengembangan yang melibatkan AG Grid **WAJIB** mengikuti standar berikut:
+
+### 11.1 Quick Filter (Pencarian Global)
+
+**❌ API Lama (Dihapus di v35 — JANGAN DIGUNAKAN):**
+```javascript
+// SALAH — setQuickFilter() sudah tidak ada di v35
+gridApi.setQuickFilter('teks pencarian')
+```
+
+**✅ API Baru yang Benar (v35):**
+```javascript
+// BENAR — gunakan setGridOption
+gridApi.setGridOption('quickFilterText', 'teks pencarian')
+```
+
+### 11.2 Pendaftaran Module Wajib
+
+Quick Filter **TIDAK AKAN AKTIF** tanpa mendaftarkan `QuickFilterModule`. Wajib ada di `ModuleRegistry`:
+```typescript
+import { QuickFilterModule } from 'ag-grid-community'
+
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  QuickFilterModule, // ← WAJIB ADA untuk fitur pencarian global
+  // ... modul lain
+])
+```
+
+### 11.3 Integrasi Global Search dengan Pinia (Vue 3)
+
+Pola standar untuk menghubungkan pencarian global dari header ke tabel AG Grid:
+
+1. **State** — Simpan di `UIStore` (`frontend/src/store/ui.ts`)
+2. **Trigger** — Gunakan `storeToRefs` + `computed` di View
+3. **Propagasi** — Panggil `gridApi.setGridOption` via `watch` di `AppGrid.vue`
+
+```typescript
+// Di AppGrid.vue
+watch(() => props.quickFilterText, (newVal) => {
+  if (gridApi.value) {
+    gridApi.value.setGridOption('quickFilterText', newVal ?? '')
+  }
+})
+```
+
+### 11.4 Dark Mode Header Styling (AG Grid)
+
+Header AG Grid di dark mode **harus menggunakan nilai berikut** agar teks terbaca dengan kontras yang baik. Gunakan CSS override dengan spesifisitas tinggi:
+
+```css
+/* Wajib — Header background dan teks */
+.dark.ag-theme-alpine {
+  --ag-header-background-color: #0f1f3d !important; /* Biru navy dalam */
+  --ag-header-foreground-color: #e2e8f0 !important; /* Putih cerah */
+}
+
+/* Wajib — Override eksplisit agar tidak tertimpa AG Grid */
+.dark.ag-theme-alpine .ag-header {
+  background-color: #0f1f3d !important;
+  border-bottom: 2px solid rgba(6, 182, 212, 0.3) !important; /* Garis aksen cyan */
+}
+
+.dark.ag-theme-alpine .ag-header-cell-text {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.dark.ag-theme-alpine .ag-icon {
+  color: #64748b !important; /* Icon filter tetap halus */
+}
+```
+
+**Nilai yang DILARANG digunakan di dark mode:**
+- `--ag-header-foreground-color: #94a3b8` → terlalu redup, tidak terbaca
+- `--ag-header-background-color: #1e293b` → terlalu mirip dengan row body
+
+### 11.5 Vertical Column Separator (Garis Pemisah Antar Kolom)
+
+AG Grid **tidak** menampilkan garis vertikal antar kolom secara default, kecuali pada kolom yang di-`pinned`. Menggunakan CSS variable saja (`--ag-cell-horizontal-border`, dll.) **tidak cukup** — harus menggunakan CSS selector langsung dengan `!important`.
+
+**✅ Cara yang Benar:**
+```css
+/* Light Mode */
+.ag-theme-alpine .ag-cell {
+  border-right: 1px solid #e2e8f0 !important;
+}
+.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid #cbd5e1 !important;
+}
+
+/* Dark Mode */
+.dark.ag-theme-alpine .ag-cell {
+  border-right: 1px solid rgba(30, 41, 59, 0.9) !important;
+}
+.dark.ag-theme-alpine .ag-header-cell {
+  border-right: 1px solid rgba(99, 182, 255, 0.12) !important;
+}
+```
+
+**❌ JANGAN gunakan pendekatan ini (tidak efektif di v35):**
+```css
+/* CSS variable saja tidak cukup untuk mengaktifkan border sel */
+--ag-cell-horizontal-border: solid #e2e8f0;
+```
+
+---
+
 ## 12. Quick-Start Produksi (Antigravity One-Click)
+
 
 Untuk menjalankan sistem ini langsung di server produksi (VPS), ikuti instruksi berikut:
 

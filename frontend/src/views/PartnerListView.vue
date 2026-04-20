@@ -1,64 +1,80 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { usePartnerStore } from '../store/partner'
+import { useUIStore } from '../store/ui'
+import { storeToRefs } from 'pinia'
 import AppGrid from '../components/ui/AppGrid.vue'
 import PartnerFormView from './PartnerFormView.vue'
-import { Search, Filter, RefreshCw } from 'lucide-vue-next'
+import { RefreshCw } from 'lucide-vue-next'
+
+const uiStore = useUIStore()
+const { globalSearch } = storeToRefs(uiStore)
+const currentSearch = computed(() => globalSearch.value)
 
 const partnerStore = usePartnerStore()
 const isFormOpen = ref(false)
 const selectedPartner = ref<any>(null)
-const searchQuery = ref('')
 
 const columnDefs = [
   { 
-    headerName: 'Partner Name', field: 'name', sortable: true, filter: true, pinned: 'left',
-    cellRenderer: (params: any) => `
-      <div style="display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 8px 0;">
-        <div style="font-weight: 700; color: var(--text-primary); line-height: 1.2;">${params.value}</div>
-        <div style="font-size: 10px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; margin-top: 4px; letter-spacing: 0.05em;">
-          ${params.data.partner_cnc || 'NO CNC'}
-        </div>
-      </div>
-    `,
-    autoHeight: true
+    headerName: 'CNC ID', 
+    field: 'partner_cnc', 
+    width: 100, 
+    pinned: 'left',
+    cellRenderer: (params: any) => `<span class="font-black text-accent-cyan tracking-widest">${params.value || '-'}</span>`
   },
-  { headerName: 'Type', field: 'type_id', width: 120 },
   { 
-    headerName: 'Status', field: 'status_id', 
+    headerName: 'Partner Name', 
+    field: 'name', 
+    minWidth: 250, 
+    flex: 2,
+    cellRenderer: (params: any) => `<span class="font-bold text-primary">${params.value}</span>`
+  },
+  { 
+    headerName: 'Stars', 
+    field: 'stars', 
+    width: 100,
     cellRenderer: (params: any) => {
-      const colors: any = { ACTIVE: 'text-accent-emerald bg-accent-emerald/10', INACTIVE: 'text-orange-400 bg-orange-400/10' }
-      const color = colors[params.value] || 'text-secondary bg-surface-500/10'
-      return `<span class="px-2 py-1 rounded-full text-xs font-bold ${color}">${params.value}</span>`
+      const stars = parseInt(params.value) || 0
+      return `<div class="text-amber-400 font-bold">${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}</div>`
     }
   },
-  { headerName: 'Rooms', field: 'rooms', width: 100 },
-  { headerName: 'Stars', field: 'stars', width: 100 },
-  { headerName: 'Address', field: 'address', flex: 2, minWidth: 250 },
+  { headerName: 'Room', field: 'rooms', width: 90 },
+  { headerName: 'Outlet', field: 'outlets', width: 90 },
   { 
-    headerName: 'Last Visit', field: 'last_visit_at', 
-    valueFormatter: (params: any) => params.value ? new Date(params.value).toLocaleDateString() : '-'
+    headerName: 'System Version', 
+    field: 'version_id', 
+    width: 140,
+    cellRenderer: (params: any) => {
+      const version = partnerStore.lookups.versions.find(v => v.id === params.value)
+      return `<span class="px-2 py-0.5 rounded-lg bg-surface-500/10 text-[10px] font-black text-secondary uppercase">${version?.name || params.value || '-'}</span>`
+    }
   },
   { 
-    headerName: 'Last Project', field: 'last_project', 
-    valueFormatter: (params: any) => params.value ? new Date(params.value).toLocaleDateString() : '-'
+    headerName: 'System Type', 
+    field: 'imp_type_id', 
+    width: 140,
+    cellRenderer: (params: any) => {
+      const type = partnerStore.lookups.imp_types.find(t => t.id === params.value)
+      return `<span class="text-accent-emerald font-bold">${type?.name || params.value || '-'}</span>`
+    }
   },
   { 
-    headerName: 'Last Updated', field: 'updated_at', 
-    valueFormatter: (params: any) => new Date(params.value).toLocaleDateString() 
+    headerName: 'Group', 
+    field: 'group_id', 
+    width: 180,
+    cellRenderer: (params: any) => {
+      if (!params.value) return '<span class="text-secondary">-</span>'
+      const val = params.value.toString().trim().toUpperCase()
+      const group = partnerStore.lookups.groups.find((g: any) => g.id.toString().toUpperCase() === val)
+      const label = group ? group.name : params.value
+      return `<span class="font-semibold text-primary">${label}</span>`
+    }
   },
-  {
-    headerName: 'Actions',
-    width: 100,
-    cellRenderer: () => `
-      <button class="p-2 hover:bg-surface-500/10 rounded-lg text-secondary hover:text-primary transition-all">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-      </button>
-    `
-  }
 ]
 
-onMounted(() => {
+onMounted(async () => {
+  await partnerStore.fetchLookups()  // Fetch lookups first so cellRenderers can map IDs to Names
   partnerStore.fetchPartners()
 })
 
@@ -77,12 +93,7 @@ const onRowDoubleClicked = (params: any) => {
   isFormOpen.value = true
 }
 
-const onCellClicked = (params: any) => {
-  if (params.colDef.headerName === 'Actions') {
-    selectedPartner.value = params.data
-    isFormOpen.value = true
-  }
-}
+
 </script>
 
 <template>
@@ -103,38 +114,19 @@ const onCellClicked = (params: any) => {
       </div>
     </div>
 
-    <!-- Filters placeholder -->
-    <div class="glass-card flex items-center gap-6 py-4">
-      <div class="relative flex-1 group">
-        <div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-10">
-          <Search class="w-4 h-4 text-secondary group-focus-within:text-accent-cyan transition-colors" />
-        </div>
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="Quick search partners by name, CNC, or address..."
-          class="w-full bg-surface-500/5 border border-border-app rounded-xl py-2 pr-4 text-sm focus:outline-none focus:border-accent-cyan/50 focus:bg-card transition-all shadow-inner"
-          style="padding-left: 3.5rem !important;"
-        />
-      </div>
-      <div class="flex items-center gap-3">
-        <button class="px-4 py-2 glass rounded-lg text-sm flex items-center gap-2 hover:border-border-app group text-secondary hover:text-primary">
-          <Filter class="w-4 h-4" /> Filter
-        </button>
-        <div class="h-8 w-px bg-border-app"></div>
-        <span class="text-xs text-secondary font-black tracking-widest uppercase">Live View</span>
-      </div>
-    </div>
+
 
     <!-- Data Grid -->
     <div class="relative">
+      <div v-if="uiStore.globalSearch" class="mb-2 text-xs font-bold text-accent-cyan animate-pulse uppercase tracking-widest">
+        FILTERED BY: "{{ uiStore.globalSearch }}"
+      </div>
       <AppGrid 
         :rowData="partnerStore.partners" 
         :columnDefs="columnDefs" 
-        :quickFilterText="searchQuery"
+        :quickFilterText="currentSearch"
         height="600px" 
         @row-double-clicked="onRowDoubleClicked"
-        @cell-clicked="onCellClicked"
       />
       
       <!-- Loading Overlay -->

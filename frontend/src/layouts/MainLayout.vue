@@ -88,6 +88,8 @@ const handleLogout = async () => {
           <div class="relative w-96 max-w-md">
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500" />
             <input 
+              :value="uiStore.globalSearch"
+              @input="uiStore.setGlobalSearch(($event.target as HTMLInputElement).value)"
               type="text" 
               placeholder="Search data..."
               class="w-full bg-surface-500/5 border border-border-app rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-accent-emerald/50 focus:ring-1 focus:ring-accent-emerald/50 transition-all"
