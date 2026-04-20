@@ -200,6 +200,70 @@ AG Grid **tidak** menampilkan garis vertikal antar kolom secara default, kecuali
 --ag-cell-horizontal-border: solid #e2e8f0;
 ```
 
+### 11.6 Row Selection & Highlight (Klik Satu Baris)
+
+Untuk menampilkan highlight baris saat diklik, AG Grid v35 memerlukan `RowSelectionModule` yang harus didaftarkan secara eksplisit. Tanpa modul ini, `api.deselectAll()` dan `node.setSelected()` akan gagal diam-diam tanpa error yang jelas.
+
+**✅ Pendaftaran Module Wajib:**
+```typescript
+import { RowSelectionModule } from 'ag-grid-community'
+
+ModuleRegistry.registerModules([
+  ClientSideRowModelModule,
+  QuickFilterModule,
+  RowSelectionModule, // ← WAJIB untuk highlight baris
+  // ... modul lain
+])
+```
+
+**✅ Cara Mengaktifkan Highlight via `node.setSelected()`:**
+```typescript
+// Di AppGrid.vue — paling reliabel, tidak bergantung pada prop rowSelection
+const onRowClicked = (params: any) => {
+  params.api.deselectAll()       // Hapus seleksi sebelumnya
+  params.node.setSelected(true)  // Pilih baris yang diklik
+  emit('rowClicked', params)
+}
+```
+
+Dan tambahkan di template:
+```html
+<ag-grid-vue
+  rowSelection="single"
+  :suppressCellFocus="true"
+  @row-clicked="onRowClicked"
+  ...
+/>
+```
+
+**✅ CSS Highlight — Light & Dark Mode:**
+```css
+/* Light mode */
+.ag-theme-alpine .ag-row-selected .ag-cell {
+  background-color: #bfdbfe !important;
+}
+
+/* Dark mode — harus target .ag-cell juga agar override dark mode blanket */
+.dark.ag-theme-alpine .ag-row-selected {
+  background-color: #1e3a5f !important;
+}
+.dark.ag-theme-alpine .ag-row-selected .ag-cell {
+  background-color: #1e3a5f !important;
+  color: #f1f5f9 !important;
+}
+```
+
+**⚠️ Perhatian Dark Mode:**
+Jika dark mode memiliki rule `.ag-cell { background-color: #0f172a !important }`, rule `!important` ini akan menimpa warna selected. Solusinya: **hapus `!important`** dari rule default `.ag-cell` dan gunakan selector yang lebih spesifik untuk selected state.
+
+**❌ JANGAN gunakan `!important` pada `.ag-row` atau `.ag-cell` di dark mode secara global:**
+```css
+/* SALAH — akan memblokir semua highlight */
+.dark.ag-theme-alpine .ag-row, .dark.ag-theme-alpine .ag-cell {
+  background-color: #0f172a !important; /* !important ini akan menimpa selected row */
+}
+```
+
 ---
 
 ## 12. Quick-Start Produksi (Antigravity One-Click)

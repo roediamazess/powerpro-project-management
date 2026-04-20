@@ -7,6 +7,7 @@ import {
   TextFilterModule,
   NumberFilterModule,
   QuickFilterModule,
+  RowSelectionModule,
   ValidationModule 
 } from 'ag-grid-community'
 
@@ -16,6 +17,7 @@ ModuleRegistry.registerModules([
   TextFilterModule,
   NumberFilterModule,
   QuickFilterModule,
+  RowSelectionModule,
   ValidationModule
 ])
 
@@ -35,11 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const uiStore = useUIStore()
-const emit = defineEmits(['rowClicked', 'rowDoubleClicked', 'cellClicked'])
-
-const onRowClicked = (params: any) => emit('rowClicked', params)
-const onRowDoubleClicked = (params: any) => emit('rowDoubleClicked', params)
-const onCellClicked = (params: any) => emit('cellClicked', params)
+const emit = defineEmits(['rowClicked', 'rowDoubleClicked'])
 
 const gridTheme = 'ag-theme-alpine'
 
@@ -56,23 +54,31 @@ const gridApi = ref<any>(null)
 
 const onGridReady = (params: any) => {
   gridApi.value = params.api
-  // Apply any initial filter text
   if (props.quickFilterText) {
     gridApi.value.setGridOption('quickFilterText', props.quickFilterText)
   }
 }
 
-// Watch for changes and use the v35 correct API
 watch(() => props.quickFilterText, (newVal) => {
   if (gridApi.value) {
     gridApi.value.setGridOption('quickFilterText', newVal ?? '')
   }
 }, { immediate: false })
+
+const onRowClicked = (params: any) => {
+  // Deselect all, then select clicked row
+  params.api.deselectAll()
+  params.node.setSelected(true)
+  emit('rowClicked', params)
+}
+
+const onRowDoubleClicked = (params: any) => {
+  emit('rowDoubleClicked', params)
+}
 </script>
 
 <template>
   <div class="w-full flex flex-col gap-1" :style="{ height: props.height }">
-    <!-- Debug indicator - shows when search text is received -->
     <div v-if="props.quickFilterText" class="text-[10px] font-bold text-accent-cyan uppercase tracking-widest px-1 pb-1">
       Searching: "{{ props.quickFilterText }}"
     </div>
@@ -86,101 +92,134 @@ watch(() => props.quickFilterText, (newVal) => {
         :columnDefs="props.columnDefs"
         :defaultColDef="defaultColDef"
         :animateRows="true"
+        :suppressCellFocus="true"
+        rowSelection="single"
         @grid-ready="onGridReady"
         @row-clicked="onRowClicked"
         @row-double-clicked="onRowDoubleClicked"
-        @cell-clicked="onCellClicked"
       />
     </div>
   </div>
 </template>
 
 <style>
-/* Base Grid Styling (Light Mode) */
+/* ===== LIGHT MODE BASE ===== */
 .ag-theme-alpine {
   --ag-background-color: #ffffff !important;
   --ag-header-background-color: #f8fafc;
   --ag-header-foreground-color: #64748b;
   --ag-foreground-color: #1e293b;
   --ag-border-color: #e2e8f0;
-  --ag-row-hover-color: #f1f5f9;
-  --ag-selected-row-background-color: #f1f5f9;
+  --ag-row-hover-color: #e0f2fe;
+  --ag-selected-row-background-color: #bfdbfe;
   --ag-odd-row-background-color: #fafafa;
-  --ag-cell-horizontal-border: solid #e2e8f0;
+  --ag-range-selection-border-color: transparent;
   --ag-header-column-separator-display: block;
   --ag-header-column-separator-height: 60%;
   --ag-header-column-separator-width: 1px;
   --ag-header-column-separator-color: #cbd5e1;
 }
 
-/* Dark Mode Overrides */
+/* ===== DARK MODE BASE ===== */
 .dark.ag-theme-alpine {
-  --ag-background-color: #0f172a !important; 
+  --ag-background-color: #0f172a !important;
   --ag-header-background-color: #0f1f3d !important;
   --ag-header-foreground-color: #e2e8f0 !important;
   --ag-foreground-color: #f1f5f9;
   --ag-border-color: #1e293b;
-  --ag-row-hover-color: #1e293b;
-  --ag-selected-row-background-color: #1e293b;
+  --ag-row-hover-color: #1e3a5f;
+  --ag-selected-row-background-color: #1d4ed8;
   --ag-odd-row-background-color: #111827;
   --ag-control-panel-background-color: #0f172a;
+  --ag-range-selection-border-color: transparent;
   --ag-header-column-separator-color: rgba(99,182,255,0.15);
   --ag-header-column-resize-handle-color: rgba(99,182,255,0.3);
-  --ag-cell-horizontal-border: solid rgba(30, 41, 59, 0.8);
-  --ag-header-column-separator-display: block;
-  --ag-header-column-separator-height: 60%;
-  --ag-header-column-separator-width: 1px;
 }
 
+/* ===== DARK MODE ELEMENT OVERRIDES ===== */
 .dark.ag-theme-alpine .ag-root-wrapper,
 .dark.ag-theme-alpine .ag-header-viewport,
-.dark.ag-theme-alpine .ag-body-viewport,
-.dark.ag-theme-alpine .ag-row,
-.dark.ag-theme-alpine .ag-cell {
+.dark.ag-theme-alpine .ag-body-viewport {
   background-color: #0f172a !important;
+}
+
+/* Row default bg — NO !important so ag-row-selected can win */
+.dark.ag-theme-alpine .ag-row:not(.ag-row-selected):not(.ag-row-hover) {
+  background-color: #0f172a;
+}
+
+.dark.ag-theme-alpine .ag-row {
   color: #f1f5f9 !important;
 }
 
+/* ===== SELECTED ROW — LIGHT ===== */
+.ag-theme-alpine .ag-row-selected .ag-cell {
+  background-color: #bfdbfe !important;
+}
+
+/* ===== SELECTED ROW — DARK ===== */
+.dark.ag-theme-alpine .ag-row-selected {
+  background-color: #1e3a5f !important;
+}
+.dark.ag-theme-alpine .ag-row-selected .ag-cell {
+  background-color: #1e3a5f !important;
+  color: #f1f5f9 !important;
+}
+
+/* ===== HOVER ROW — DARK ===== */
+.dark.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) {
+  background-color: #162033 !important;
+}
+.dark.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) .ag-cell {
+  background-color: #162033 !important;
+}
+
+/* ===== HEADER ===== */
 .dark.ag-theme-alpine .ag-header {
   background-color: #0f1f3d !important;
   border-bottom: 2px solid rgba(6, 182, 212, 0.3) !important;
 }
 
+.ag-theme-alpine .ag-header-cell-text,
 .dark.ag-theme-alpine .ag-header-cell-text {
-  color: #e2e8f0 !important;
   font-weight: 700 !important;
   font-size: 11px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
 }
 
+.dark.ag-theme-alpine .ag-header-cell-text {
+  color: #e2e8f0 !important;
+}
+
 .dark.ag-theme-alpine .ag-icon {
   color: #64748b !important;
 }
 
-.ag-root-wrapper {
+/* ===== REMOVE CELL FOCUS BLACK BOX ===== */
+.ag-theme-alpine .ag-cell-focus,
+.dark.ag-theme-alpine .ag-cell-focus {
   border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* Vertical column separator — Light Mode */
-.ag-theme-alpine .ag-cell {
-  border-right: 1px solid #e2e8f0 !important;
+/* ===== ROW TRANSITION ===== */
+.ag-theme-alpine .ag-row,
+.dark.ag-theme-alpine .ag-row {
+  transition: background-color 0.15s ease;
 }
 
-.ag-theme-alpine .ag-header-cell {
-  border-right: 1px solid #cbd5e1 !important;
-}
+/* ===== MISC ===== */
+.ag-root-wrapper { border: none !important; }
 
-/* Vertical column separator — Dark Mode */
-.dark.ag-theme-alpine .ag-cell {
-  border-right: 1px solid rgba(30, 41, 59, 0.9) !important;
-}
+/* ===== VERTICAL COLUMN SEPARATORS ===== */
+.ag-theme-alpine .ag-cell { border-right: 1px solid #e2e8f0 !important; }
+.ag-theme-alpine .ag-header-cell { border-right: 1px solid #cbd5e1 !important; }
+.dark.ag-theme-alpine .ag-cell { border-right: 1px solid rgba(30, 41, 59, 0.9) !important; }
+.dark.ag-theme-alpine .ag-header-cell { border-right: 1px solid rgba(99, 182, 255, 0.12) !important; }
 
-.dark.ag-theme-alpine .ag-header-cell {
-  border-right: 1px solid rgba(99, 182, 255, 0.12) !important;
-}
-
-/* AG Grid Filter/Popup Customization */
+/* ===== FILTER POPUP ===== */
 .ag-popup-editor, .ag-menu, .ag-filter-wrapper {
   background-color: var(--bg-card) !important;
   backdrop-filter: blur(16px) !important;
@@ -190,9 +229,7 @@ watch(() => props.quickFilterText, (newVal) => {
   padding: 12px !important;
 }
 
-.ag-filter-body-wrapper {
-  padding: 8px 0 !important;
-}
+.ag-filter-body-wrapper { padding: 8px 0 !important; }
 
 .ag-filter-wrapper input {
   padding-left: 36px !important;
@@ -211,7 +248,5 @@ watch(() => props.quickFilterText, (newVal) => {
   outline: none !important;
 }
 
-.dark .ag-filter-wrapper input {
-  color: white !important;
-}
+.dark .ag-filter-wrapper input { color: white !important; }
 </style>
