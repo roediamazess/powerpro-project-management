@@ -9,7 +9,7 @@ const projectStore = useProjectStore()
 const isFormOpen = ref(false)
 const selectedProject = ref<any>(null)
 const currentSearch = ref('')
-const selectedTab = ref('ALL')
+const selectedTab = ref('PROGRESS')
 const gridResultCount = ref(0)
 
 const STATUSTABS = [

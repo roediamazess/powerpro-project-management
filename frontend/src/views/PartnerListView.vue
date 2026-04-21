@@ -12,7 +12,7 @@ const currentSearch = ref('')
 const partnerStore = usePartnerStore()
 const isFormOpen = ref(false)
 const selectedPartner = ref<any>(null)
-const selectedTab = ref('ALL')
+const selectedTab = ref('ACTIVE')
 const gridResultCount = ref(0)
 
 const STATUSTABS = [
