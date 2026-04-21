@@ -75,7 +75,6 @@ const handleSubmit = async () => {
   if (!formData.value.sub_area_id) mandatoryFields.push('SubArea')
   if (!formData.value.address || formData.value.address.trim() === '') mandatoryFields.push('Address')
   if (!formData.value.version_id) mandatoryFields.push('System Version')
-  if (!formData.value.imp_type_id) mandatoryFields.push('Implementation Type')
 
   if (mandatoryFields.length > 0) {
     error.value = `MANDATORY FIELD MISSING: ${mandatoryFields.join(', ')} must be provided.`
