@@ -87,24 +87,23 @@ const onDrop = (day: string, slot: string) => {
 
       <div class="flex items-center gap-4">
         <!-- Manager User Selector -->
-        <div v-if="isManager" class="flex items-center gap-3 bg-surface-900 border border-surface-800 rounded-xl px-4 py-2 ring-1 ring-accent-emerald/20">
+        <div v-if="isManager" class="flex items-center gap-3 glass border border-border-app rounded-xl px-4 py-2 ring-1 ring-accent-emerald/20">
           <User class="w-4 h-4 text-accent-emerald" />
           <select 
             @change="(e) => switchUser((e.target as HTMLSelectElement).value)"
-            class="bg-transparent text-sm font-bold text-white outline-none cursor-pointer"
+            class="bg-transparent text-sm font-bold text-primary outline-none cursor-pointer"
           >
             <option value="">My Calendar</option>
             <option v-for="u in users" :key="u.user_id" :value="u.user_id">{{ u.fullname }}</option>
           </select>
         </div>
 
-        <div class="flex items-center gap-1 bg-surface-900 border border-surface-800 rounded-xl p-1 shadow-inner">
-          <button class="p-2 hover:bg-surface-800 rounded-lg text-surface-400 transition-colors"><ChevronLeft class="w-4 h-4" /></button>
-          <span class="px-4 text-xs font-black text-white tracking-widest">APR 19 - 25</span>
-          <button class="p-2 hover:bg-surface-800 rounded-lg text-surface-400 transition-colors"><ChevronRight class="w-4 h-4" /></button>
+        <div class="flex items-center gap-1 glass border border-border-app rounded-xl p-1 shadow-inner">
+          <button class="p-2 hover:bg-surface-500/10 rounded-lg text-secondary transition-colors"><ChevronLeft class="w-4 h-4" /></button>
+          <span class="px-4 text-xs font-black text-primary tracking-widest">APR 19 - 25</span>
+          <button class="p-2 hover:bg-surface-500/10 rounded-lg text-secondary transition-colors"><ChevronRight class="w-4 h-4" /></button>
         </div>
-        <button @click="openAddForm" v-if="!isViewingOthers" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-accent-cyan to-accent-emerald border-none shadow-lg shadow-accent-emerald/10">
-          <Plus class="w-5 h-5" />
+        <button @click="openAddForm" v-if="!isViewingOthers" class="btn-primary !w-auto px-8 flex items-center justify-center bg-gradient-to-r from-accent-cyan to-accent-emerald border-none shadow-lg shadow-accent-emerald/10">
           Schedule Task
         </button>
       </div>
@@ -113,33 +112,33 @@ const onDrop = (day: string, slot: string) => {
     <!-- Interactive Grid -->
     <div class="glass-card shadow-2xl p-0 overflow-hidden group/calendar">
       <!-- Grid Header -->
-      <div class="grid grid-cols-[100px_repeat(5,1fr)] bg-surface-900/50 border-b border-surface-800/80">
-        <div class="p-4 border-r border-surface-800/50"></div>
-        <div v-for="day in days" :key="day" class="p-4 text-center border-r border-surface-800/50 last:border-r-0">
-          <p class="text-[10px] font-black text-surface-500 uppercase tracking-[0.2em] mb-1">Weekday</p>
-          <p class="text-sm font-bold text-white">{{ day }}</p>
+      <div class="grid grid-cols-[100px_repeat(5,1fr)] border-b border-border-app" :style="{ backgroundColor: 'var(--bg-card)' }">
+        <div class="p-4 border-r border-border-app"></div>
+        <div v-for="day in days" :key="day" class="p-4 text-center border-r border-border-app last:border-r-0">
+          <p class="text-[10px] font-black text-secondary uppercase tracking-[0.2em] mb-1">Weekday</p>
+          <p class="text-sm font-bold text-primary">{{ day }}</p>
         </div>
       </div>
 
       <!-- Time Slots Grid -->
       <div class="grid grid-cols-[100px_repeat(5,1fr)] h-[700px] relative">
         <!-- Time Labels -->
-        <div class="bg-surface-900/30 border-r border-surface-800/80">
-          <div v-for="slot in timeSlots" :key="slot" class="h-[70px] flex items-center justify-center border-b border-surface-800/20 last:border-0 relative">
-            <span class="text-[10px] font-black text-surface-600 tracking-tighter">{{ slot }}</span>
-            <div class="absolute -right-1 top-0 w-2 h-2 rounded-full bg-surface-800 translate-x-1/2"></div>
+        <div class="border-r border-border-app" :style="{ backgroundColor: 'var(--bg-card)' }">
+          <div v-for="slot in timeSlots" :key="slot" class="h-[70px] flex items-center justify-center border-b border-border-app last:border-0 relative">
+            <span class="text-[10px] font-black text-secondary tracking-tighter">{{ slot }}</span>
+            <div class="absolute -right-1 top-0 w-2 h-2 rounded-full bg-border-app translate-x-1/2"></div>
           </div>
         </div>
 
         <!-- Working Area -->
         <div 
           v-for="day in days" :key="day" 
-          class="relative border-r border-surface-800/20 last:border-r-0"
+          class="relative border-r border-border-app last:border-r-0"
           @dragover.prevent
           @drop="onDrop(day, 'dynamic-slot')"
         >
           <!-- Grid Lines -->
-          <div v-for="slot in timeSlots" :key="slot" class="h-[70px] border-b border-surface-800/20 last:border-0 hover:bg-accent-emerald/[0.03] transition-colors"></div>
+          <div v-for="slot in timeSlots" :key="slot" class="h-[70px] border-b border-border-app last:border-0 hover:bg-accent-emerald/[0.03] transition-colors"></div>
 
           <!-- Dynamic Blocks (Mock data integrated into interactive UI) -->
           <div 
@@ -190,7 +189,7 @@ const onDrop = (day: string, slot: string) => {
           <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Conflict Detected</span>
         </div>
       </div>
-      <p class="text-[10px] text-surface-600 font-bold italic">Drag blocks to reschedule. All changes are logged to Audit System.</p>
+      <p class="text-[10px] text-secondary font-bold italic">Drag blocks to reschedule. All changes are logged to Audit System.</p>
     </div>
 
     <!-- Modal Form Integration -->

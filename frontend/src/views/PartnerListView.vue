@@ -5,11 +5,9 @@ import { useUIStore } from '../store/ui'
 import { storeToRefs } from 'pinia'
 import AppGrid from '../components/ui/AppGrid.vue'
 import PartnerFormView from './PartnerFormView.vue'
-import { RefreshCw } from 'lucide-vue-next'
+import { RefreshCw, Search } from 'lucide-vue-next'
 
-const uiStore = useUIStore()
-const { globalSearch } = storeToRefs(uiStore)
-const currentSearch = computed(() => globalSearch.value)
+const currentSearch = ref('')
 
 const partnerStore = usePartnerStore()
 const isFormOpen = ref(false)
@@ -97,35 +95,41 @@ const onRowDoubleClicked = (params: any) => {
 </script>
 
 <template>
-  <div class="space-y-8" v-auto-animate>
+  <div class="h-full flex flex-col space-y-4 pb-2" v-auto-animate>
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-primary tracking-tight italic">Partner <span class="text-accent-cyan">Database</span></h1>
-        <p class="text-secondary mt-1">Management of hotels, resorts, and operational partners.</p>
-      </div>
+    <div class="flex-none flex items-center justify-between">
       <div class="flex items-center gap-3">
+        <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center gap-2 bg-gradient-to-r from-accent-emerald to-accent-cyan border-none shadow-lg shadow-accent-cyan/10">
+          Add Partner
+        </button>
         <button @click="partnerStore.fetchPartners()" class="p-3 glass rounded-xl text-secondary hover:text-accent-cyan transition-all">
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': partnerStore.isLoading }" />
         </button>
-        <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center gap-2 bg-gradient-to-r from-accent-emerald to-accent-cyan">
-          Add Partner
-        </button>
+        
+        <!-- Local Search -->
+        <div class="relative group ml-2">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 group-focus-within:text-accent-cyan transition-colors z-10" />
+          <input 
+            v-model="currentSearch"
+            type="text" 
+            placeholder="Search partners..."
+            class="w-48 xl:w-64 bg-surface-500/5 hover:bg-surface-500/10 border border-border-app hover:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 focus:bg-surface-900 transition-all shadow-inner relative"
+          />
+        </div>
+      </div>
+      <div class="text-right">
+        <h1 class="text-3xl font-bold text-primary tracking-tight italic">Partner <span class="text-accent-cyan">Database</span></h1>
+        <p class="text-secondary mt-1">Management of hotels, resorts, and operational partners.</p>
       </div>
     </div>
 
-
-
     <!-- Data Grid -->
-    <div class="relative">
-      <div v-if="uiStore.globalSearch" class="mb-2 text-xs font-bold text-accent-cyan animate-pulse uppercase tracking-widest">
-        FILTERED BY: "{{ uiStore.globalSearch }}"
-      </div>
+    <div class="flex-1 min-h-0 relative">
       <AppGrid 
         :rowData="partnerStore.partners" 
         :columnDefs="columnDefs" 
         :quickFilterText="currentSearch"
-        height="600px" 
+        height="100%" 
         @row-double-clicked="onRowDoubleClicked"
       />
       

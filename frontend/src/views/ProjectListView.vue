@@ -95,9 +95,8 @@ const handleFormSuccess = () => {
         <button @click="projectStore.fetchProjects()" class="p-3 glass rounded-xl text-secondary hover:text-accent-emerald transition-all">
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': projectStore.isLoading }" />
         </button>
-        <button @click="openAddForm" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-accent-cyan to-accent-emerald">
-          <Plus class="w-5 h-5" />
-          Initialize Project
+        <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center justify-center bg-gradient-to-r from-accent-cyan to-accent-emerald">
+          Add Project
         </button>
       </div>
     </div>

@@ -236,14 +236,34 @@ Dan tambahkan di template:
 />
 ```
 
-**✅ CSS Highlight — Light & Dark Mode:**
+**✅ CSS Highlight & Hover — Light & Dark Mode:**
+AG Grid v35 dapat menimpa warna secara internal melalui default root variables, sehingga hover dan seleksi *membutuhkan* penargetan pseudo-class dan `.ag-cell` secara eksplisit dengan `!important`. Desain menggunakan palet warna yang premium dan lembut.
+
 ```css
-/* Light mode */
+/* --- LIGHT MODE --- */
+/* Hover: Biru sangat lembut (#eff6ff / tailwind blue-50) */
+.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) {
+  background-color: #eff6ff !important;
+}
+.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) .ag-cell {
+  background-color: #eff6ff !important;
+}
+
+/* Selected: Biru terang penegas (#bfdbfe / tailwind blue-200) */
 .ag-theme-alpine .ag-row-selected .ag-cell {
   background-color: #bfdbfe !important;
 }
 
-/* Dark mode — harus target .ag-cell juga agar override dark mode blanket */
+/* --- DARK MODE --- */
+/* Hover: Biru Navy Pudar (#162033) */
+.dark.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) {
+  background-color: #162033 !important;
+}
+.dark.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) .ag-cell {
+  background-color: #162033 !important;
+}
+
+/* Selected: Biru Navy Dalam (#1e3a5f) */
 .dark.ag-theme-alpine .ag-row-selected {
   background-color: #1e3a5f !important;
 }
@@ -263,6 +283,146 @@ Jika dark mode memiliki rule `.ag-cell { background-color: #0f172a !important }`
   background-color: #0f172a !important; /* !important ini akan menimpa selected row */
 }
 ```
+
+### 11.7 UI Standardization: Action Buttons
+
+Untuk menjaga konsistensi pada tombol aksi utama di setiap halaman (contoh: *Add Project*, *Add Partner*), tombol dengan kelas dasar `.btn-primary` mungkin akan merespons lebar kontainernya secara tak terduga atau terlalu rapat secara padding horizontal.
+
+Gunakan standar utilitas berikut untuk memastikan rasio komponen Glassmorphism yang sempurna (tidak membetot atau terlalu mepet):
+```html
+<!-- STANDAR: Gunakan !w-auto dan px-8 (atau padding eksplisit lain) -->
+<button class="btn-primary !w-auto px-8 ...">
+  Add Project
+</button>
+```
+
+### 11.8 Layout Standardization: Sticky Header & Internal Grid Scroll
+
+Untuk aplikasi enterprise sejati (khususnya yang menyajikan Data Grid kompleks setinggi layar), **Pengguliran (Scrolling) tingkat Page/Root harus dihentikan**. Komponen Navbar, Header Halaman, dan Tombol-tombol navigasi harus beku (sticky) pada tempatnya. Hanya "Grid Body" yang murni menggulir isinya sendiri.
+
+Gunakan standar hierarki DOM berikut di setiap modul utama untuk menyajikan interaktivitas ala *Desktop App*:
+
+1.  **MainLayout**: Di tingkat root/routing, kunci layar agar tetap sebatas viewport.
+    ```html
+    <div class="h-screen flex flex-col overflow-hidden"> ... </div>
+    ```
+
+2.  **View Components (ex: PartnerListView)**: Pastikan Header bersifat statis (`flex-none`), sedangkan Kontainer Tabel meregang elastis (`flex-1 min-h-0`). **Standar Orientasi Header**: Grup Tombol Aksi berada di sisi **Kiri**, dan Judul Halaman berada di sisi **Kanan** (dengan properti `text-right`).
+    ```html
+    <template>
+      <div class="h-full flex flex-col space-y-4 pb-2" v-auto-animate>
+        <!-- STATIS: Header Layout Terstandarisasi -->
+        <div class="flex-none flex items-center justify-between">
+          
+          <!-- KIRI: Aksi Utama (Add di kiri, Refresh, lalu Local Search) -->
+          <div class="flex items-center gap-3">
+            <button class="btn-primary !w-auto px-8 ...">Add Data</button>
+            <button class="p-3 glass rounded-xl ...">Refresh</button>
+            
+            <!-- Local Search (Terkait ke AG Grid quickFilterText) -->
+            <div class="relative group ml-2">
+              <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 group-focus-within:text-accent-cyan transition-colors z-10" />
+              <input 
+                v-model="currentSearch"
+                type="text" 
+                placeholder="Search..."
+                class="w-48 xl:w-64 bg-surface-500/5 hover:bg-surface-500/10 border border-border-app hover:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 focus:bg-surface-900 transition-all shadow-inner relative"
+              />
+            </div>
+          </div>
+          
+          <!-- KANAN: Text Title (text-right) -->
+          <div class="text-right">
+            <h1>Module Database</h1>
+            <p>Management descriptive text...</p>
+          </div>
+        </div>
+
+        <!-- ELASTIS: Hanya area Grid yang bergulir -->
+        <div class="flex-1 min-h-0 relative">
+          <AppGrid height="100%" :quickFilterText="currentSearch" /> 
+        </div>
+      </div>
+    </template>
+    ```
+
+---
+
+### 11.9 Floating Dynamic Dock & Global Navigation Standards
+
+Aplikasi ini menggunakan pola **Floating Dynamic Dock** di bagian atas untuk navigasi utama. Berikut adalah standar konstruksinya:
+
+1.  **Navigasi Vertikal (Center)**:
+    Gunakan `flex-col` untuk menumpuk Icon di atas Label. Label harus menggunakan font yang sangat padat (`font-black`), ukuran kecil (`text-[9px]`), dan huruf kapital (`uppercase`).
+    ```html
+    <router-link class="flex flex-col items-center gap-1 ...">
+      <Icon class="w-5 h-5" />
+      <span class="font-black text-[9px] uppercase tracking-widest">MENU NAME</span>
+    </router-link>
+    ```
+
+2.  **Identitas Brand (Left)**:
+    Logo disematkan menggunakan file vektor (`.svg`) transparan di sisi kiri dock. Jangan gunakan background solid pada logo agar menyatu dengan efek `glassmorphism` Navbar.
+
+3.  **Profile & User Management (Right)**:
+    Integrasikan aksi user (Sign Out, Settings) ke dalam **Profile Dropdown**. Jangan gunakan tombol terpisah untuk Sign Out di bar utama. Dropdown harus memiliki transisi yang halus dan overlay klik di belakangnya untuk penutupan otomatis.
+
+4.  **Standar Sinkronisasi Tema (Theme Syncing)**:
+    -   Latar belakang root aplikasi harus menggunakan variabel semantik `bg-bg-app` (bukan hardcoded surface).
+    -   **AG Grid**: Harus mendengarkan state `uiStore.theme` secara reaktif dan mengganti skema visual antara `ag-theme-alpine` (light) dan `ag-theme-alpine-dark` (dark) secara otomatis.
+    -   Gunakan transisi CSS warna (`transition-colors duration-500`) pada elemen kontainer besar untuk efek pergantian tema yang sinematik.
+
+5.  **Variabel CSS Semantik (`main.css`)**:
+    Selalu petakan variabel `:root` sebagai warna **Light Mode** dan `.dark` sebagai warna **Dark Mode** untuk memastikan konsistensi transisi warna di seluruh aplikasi.
+
+---
+
+### 11.10 Standar Dark Mode Universal — Aturan Kritikal
+
+Berikut adalah aturan yang WAJIB diikuti agar semua komponen bereaksi terhadap perubahan dark/light mode dengan benar:
+
+**A. AG Grid Dark Mode (AppGrid.vue)**
+
+> ⚠️ **KESALAHAN UMUM**: Mengganti kelas `ag-theme-alpine` dengan `ag-theme-alpine-dark` saat dark mode — ini mematikan selector dark yang sudah didefinisikan.
+
+**Cara yang BENAR**: Gunakan selalu `ag-theme-alpine` sebagai kelas tetap, dan tambahkan `dark` secara kondisional ke container yang SAMA:
+```html
+<!-- ✅ BENAR — selector .dark.ag-theme-alpine akan match -->
+<div
+  class="ag-theme-alpine"
+  :class="uiStore.theme === 'dark' ? 'dark border-surface-700/50' : 'border-surface-200'"
+>
+```
+CSS selector dark mode di AppGrid.vue menggunakan `.dark.ag-theme-alpine { ... }` — kedua kelas harus hadir di elemen yang sama.
+
+**B. Background Container — Gunakan CSS Variable, Bukan Tailwind Dark Classes**
+
+Saat Tailwind production build melakukan purge, kelas `dark:bg-surface-900` yang dipakai secara kondisional bisa dihapus. Gunakan inline style dengan CSS variable sebagai solusi anti-purge:
+```html
+<!-- ✅ AMAN dari purge -->
+<div :style="{ backgroundColor: 'var(--bg-app)' }">...</div>
+<div :style="{ backgroundColor: 'var(--bg-card)' }">...</div>
+```
+
+**C. Safelist Tailwind untuk Dark Mode Classes**
+
+Tambahkan kelas dark mode kritikal ke `safelist` di `tailwind.config.js` agar tidak di-purge:
+```js
+safelist: [
+  'dark:bg-surface-900',
+  'ag-theme-alpine-dark',
+  'ag-theme-alpine',
+]
+```
+
+**D. Teks & Border — Selalu Gunakan Variabel Semantik**
+
+| ❌ Hindari | ✅ Gunakan |
+|---|---|
+| `text-surface-500` | `text-secondary` |
+| `text-white` | `text-primary` |
+| `border-surface-800/50` | `border-border-app` |
+| `bg-surface-900` | `var(--bg-card)` atau `var(--bg-app)` |
 
 ---
 

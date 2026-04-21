@@ -87,8 +87,7 @@ onMounted(() => {
         <button @click="complianceStore.fetchEntries()" class="p-3 glass rounded-xl text-surface-400 hover:text-accent-emerald transition-all">
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': complianceStore.isLoading }" />
         </button>
-        <router-link :to="{ name: 'compliance-new' }" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-accent-emerald to-emerald-600 border-none shadow-lg shadow-accent-emerald/20">
-          <Plus class="w-5 h-5" />
+        <router-link :to="{ name: 'compliance-new' }" class="btn-primary !w-auto px-8 flex items-center justify-center bg-gradient-to-r from-accent-emerald to-emerald-600 border-none shadow-lg shadow-accent-emerald/20">
           New Inspection
         </router-link>
       </div>

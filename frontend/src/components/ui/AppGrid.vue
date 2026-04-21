@@ -22,7 +22,7 @@ ModuleRegistry.registerModules([
 ])
 
 import { useUIStore } from '../../store/ui'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 interface Props {
   rowData: any[]
@@ -83,8 +83,8 @@ const onRowDoubleClicked = (params: any) => {
       Searching: "{{ props.quickFilterText }}"
     </div>
     <div 
-      :class="[gridTheme, uiStore.theme]"
-      class="flex-1 rounded-2xl overflow-hidden border border-surface-200 dark:border-surface-800/50 dark:bg-surface-900"
+      class="ag-theme-alpine flex-1 rounded-2xl overflow-hidden border"
+      :class="uiStore.theme === 'dark' ? 'dark border-surface-700/50' : 'border-surface-200'"
     >
       <ag-grid-vue
         class="h-full w-full"
@@ -164,6 +164,14 @@ const onRowDoubleClicked = (params: any) => {
 .dark.ag-theme-alpine .ag-row-selected .ag-cell {
   background-color: #1e3a5f !important;
   color: #f1f5f9 !important;
+}
+
+/* ===== HOVER ROW — LIGHT ===== */
+.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) {
+  background-color: #eff6ff !important;
+}
+.ag-theme-alpine .ag-row-hover:not(.ag-row-selected) .ag-cell {
+  background-color: #eff6ff !important;
 }
 
 /* ===== HOVER ROW — DARK ===== */

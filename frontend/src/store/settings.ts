@@ -12,6 +12,12 @@ export const useSettingsStore = defineStore('settings', {
       versions: [] as any[],
       imp_types: [] as any[]
     },
+    projectLookups: {
+      types: [] as any[],
+      statuses: [] as any[],
+      arrangements: [] as any[],
+      assignments: [] as any[]
+    },
     isLoading: false,
     error: null as string | null
   }),
@@ -23,7 +29,19 @@ export const useSettingsStore = defineStore('settings', {
         const res = await apiClient.get('/lookups/partner')
         this.lookups = res.data
       } catch (err) {
-        this.error = 'Failed to fetch settings data'
+        this.error = 'Failed to fetch partner settings data'
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async fetchProjectLookups() {
+      this.isLoading = true
+      try {
+        const res = await apiClient.get('/lookups/project')
+        this.projectLookups = res.data
+      } catch (err) {
+        this.error = 'Failed to fetch project settings data'
       } finally {
         this.isLoading = false
       }
@@ -35,7 +53,13 @@ export const useSettingsStore = defineStore('settings', {
       } else {
         await apiClient.post(`/lookups/${endpoint}`, payload)
       }
-      await this.fetchPartnerLookups()
+      
+      // Auto-refresh the relevant dataset
+      if (endpoint.startsWith('project-')) {
+        await this.fetchProjectLookups()
+      } else {
+        await this.fetchPartnerLookups()
+      }
     }
   }
 })

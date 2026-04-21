@@ -9,6 +9,9 @@ from app.models.partner import (
     PartnerType, PartnerStatus, PartnerGroup, PartnerArea, 
     PartnerSubArea, PartnerSystemVersion, PartnerImplementationType
 )
+from app.models.project import (
+    ProjectType, ProjectStatus, ProjectArrangement, ProjectAssignment
+)
 from app.schemas.lookups import (
     Lookup, LookupCreate, LookupUpdate,
     SubArea, SubAreaCreate, SubAreaUpdate
@@ -43,6 +46,24 @@ async def get_partner_lookups(
         "sub_areas": [{"id": x.sub_area_id, "name": x.name, "area_id": x.area_id, "listindex": x.listindex, "is_active": x.is_active} for x in sub_areas],
         "versions": [{"id": x.version_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in versions],
         "imp_types": [{"id": x.imp_type_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in imp_types],
+    }
+
+@router.get("/project")
+async def get_project_lookups(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Get all lookup data for project forms and settings."""
+    types = (await db.execute(select(ProjectType).order_by(ProjectType.listindex))).scalars().all()
+    statuses = (await db.execute(select(ProjectStatus).order_by(ProjectStatus.listindex))).scalars().all()
+    arrangements = (await db.execute(select(ProjectArrangement).order_by(ProjectArrangement.listindex))).scalars().all()
+    assignments = (await db.execute(select(ProjectAssignment).order_by(ProjectAssignment.listindex))).scalars().all()
+
+    return {
+        "types": [{"id": x.type_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in types],
+        "statuses": [{"id": x.status_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in statuses],
+        "arrangements": [{"id": x.arrangement_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in arrangements],
+        "assignments": [{"id": x.assignment_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in assignments],
     }
 
 # --- Generic CRUD Helper Logic ---
@@ -168,3 +189,40 @@ async def create_partner_imp_type(schema: LookupCreate, db: AsyncSession = Depen
 @router.put("/partner-imp-types/{id_val}", response_model=Lookup)
 async def update_partner_imp_type(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
     return await update_lookup(db, PartnerImplementationType, "imp_type_id", id_val, schema)
+
+# PROJECT TYPES
+@router.post("/project-types", response_model=Lookup)
+async def create_project_type(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, ProjectType, "type_id", schema)
+
+@router.put("/project-types/{id_val}", response_model=Lookup)
+async def update_project_type(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, ProjectType, "type_id", id_val, schema)
+
+# PROJECT STATUSES
+@router.post("/project-statuses", response_model=Lookup)
+async def create_project_status(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, ProjectStatus, "status_id", schema)
+
+@router.put("/project-statuses/{id_val}", response_model=Lookup)
+async def update_project_status(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, ProjectStatus, "status_id", id_val, schema)
+
+# PROJECT ARRANGEMENTS
+@router.post("/project-arrangements", response_model=Lookup)
+async def create_project_arrangement(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, ProjectArrangement, "arrangement_id", schema)
+
+@router.put("/project-arrangements/{id_val}", response_model=Lookup)
+async def update_project_arrangement(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, ProjectArrangement, "arrangement_id", id_val, schema)
+
+# PROJECT ASSIGNMENTS
+@router.post("/project-assignments", response_model=Lookup)
+async def create_project_assignment(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, ProjectAssignment, "assignment_id", schema)
+
+@router.put("/project-assignments/{id_val}", response_model=Lookup)
+async def update_project_assignment(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, ProjectAssignment, "assignment_id", id_val, schema)
+

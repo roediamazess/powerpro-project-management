@@ -5,6 +5,13 @@ export default {
     "./src/**/*.{vue,js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
+  safelist: [
+    'dark:bg-surface-900',
+    'dark:bg-surface-800',
+    'dark:bg-surface-950',
+    'ag-theme-alpine-dark',
+    'ag-theme-alpine',
+  ],
   theme: {
     extend: {
       colors: {

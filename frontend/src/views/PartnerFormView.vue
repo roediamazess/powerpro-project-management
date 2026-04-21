@@ -133,9 +133,12 @@ const handleSubmit = async () => {
     <div class="absolute inset-0 bg-surface-950/40 backdrop-blur-md" @click="emit('close')"></div>
 
     <!-- Centered Modal Panel -->
-    <div v-auto-animate class="relative w-full max-w-4xl max-h-[90vh] glass border border-white/10 shadow-2xl flex flex-col rounded-[32px] overflow-hidden animate-in fade-in zoom-in duration-300">
+    <div v-auto-animate 
+      class="relative w-full max-w-4xl max-h-[90vh] border border-white/10 shadow-2xl flex flex-col rounded-[32px] overflow-hidden animate-in fade-in zoom-in duration-300"
+      :style="{ backgroundColor: 'var(--bg-app)' }"
+    >
       <!-- Header -->
-      <div class="p-8 border-b border-border-app flex flex-col gap-6 bg-surface-950/5">
+      <div class="p-8 border-b border-border-app flex flex-col gap-6" :style="{ backgroundColor: 'var(--bg-card)' }">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl bg-accent-emerald/10 border border-accent-emerald/20 flex items-center justify-center text-accent-emerald shadow-lg">
@@ -148,13 +151,13 @@ const handleSubmit = async () => {
               <p class="text-[10px] text-secondary font-black tracking-widest uppercase mt-1">Operational Module v2.1</p>
             </div>
           </div>
-          <button @click="emit('close')" class="p-2 hover:bg-surface-500/10 rounded-xl text-secondary transition-all hover:rotate-90">
+          <button @click="emit('close')" class="p-2 hover:bg-surface-500/10 dark:hover:bg-surface-700 rounded-xl text-secondary transition-all hover:rotate-90">
             <X class="w-6 h-6" />
           </button>
         </div>
 
         <!-- Tab Navigation -->
-        <div class="flex gap-2 p-1.5 bg-surface-500/5 rounded-2xl w-fit border border-border-app">
+        <div class="flex gap-2 p-1.5 bg-surface-200/50 dark:bg-surface-950/50 rounded-2xl w-fit border border-border-app">
           <button 
             @click="currentTab = 'general'"
             class="px-6 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center gap-2"
@@ -183,7 +186,7 @@ const handleSubmit = async () => {
       </div>
 
       <!-- Scrollable Content Interface -->
-      <div v-auto-animate class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+      <div v-auto-animate class="flex-1 overflow-y-auto p-8 custom-scrollbar" :style="{ backgroundColor: 'var(--bg-app)' }">
         <!-- Enhanced Error Alert -->
         <div v-if="error" class="bg-red-500/10 border border-red-500/20 p-6 rounded-[24px] mb-8 animate-in fade-in slide-in-from-top-4 duration-300">
           <div class="flex items-start gap-4">
@@ -250,9 +253,9 @@ const handleSubmit = async () => {
           <!-- 2. Geographical Location -->
           <section class="space-y-6">
             <div class="flex items-center gap-3">
-              <div class="h-px flex-1 bg-gradient-to-r from-transparent to-surface-800"></div>
-              <h3 class="text-[10px] font-black text-surface-500 uppercase tracking-[0.3em]">Geographical Mapping</h3>
-              <div class="h-px flex-1 bg-gradient-to-l from-transparent to-surface-800"></div>
+              <div class="h-px flex-1 bg-gradient-to-r from-transparent to-border-app"></div>
+              <h3 class="text-[10px] font-black text-secondary uppercase tracking-[0.3em]">Geographical Mapping</h3>
+              <div class="h-px flex-1 bg-gradient-to-l from-transparent to-border-app"></div>
             </div>
 
             <div class="grid grid-cols-2 gap-6">
@@ -283,9 +286,9 @@ const handleSubmit = async () => {
           <!-- 3. Operational Performance -->
           <section class="space-y-6">
             <div class="flex items-center gap-3">
-              <div class="h-px flex-1 bg-gradient-to-r from-transparent to-surface-800"></div>
-              <h3 class="text-[10px] font-black text-surface-500 uppercase tracking-[0.3em]">Operational Metrics</h3>
-              <div class="h-px flex-1 bg-gradient-to-l from-transparent to-surface-800"></div>
+              <div class="h-px flex-1 bg-gradient-to-r from-transparent to-border-app"></div>
+              <h3 class="text-[10px] font-black text-secondary uppercase tracking-[0.3em]">Operational Metrics</h3>
+              <div class="h-px flex-1 bg-gradient-to-l from-transparent to-border-app"></div>
             </div>
 
             <div class="grid grid-cols-3 gap-6">
@@ -446,7 +449,7 @@ const handleSubmit = async () => {
       </div>
 
       <!-- Combined Footer Action Bar (RIGHT ALIGNED) -->
-      <div class="p-8 border-t border-border-app bg-surface-500/5 flex flex-row gap-4 items-center justify-end">
+      <div class="p-8 border-t border-border-app flex flex-row gap-4 items-center justify-end" :style="{ backgroundColor: 'var(--bg-card)' }">
         <!-- Initialize/Save -->
         <button @click="handleSubmit" :disabled="isSubmitting" class="w-auto px-12 h-14 btn-primary bg-gradient-to-r from-accent-emerald to-accent-cyan shadow-xl shadow-accent-emerald/20 flex items-center justify-center gap-3 active:scale-95 transition-all">
           <Save v-if="!isSubmitting" class="w-5 h-5" />

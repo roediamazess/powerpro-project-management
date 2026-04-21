@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { X, Save, Users, RefreshCw, Layers } from 'lucide-vue-next'
 import { useProjectStore } from '../store/project'
 import { usePartnerStore } from '../store/partner'
+import { useSettingsStore } from '../store/settings'
 import LookupPopup from '../components/LookupPopup.vue'
 import DatePickerPopup from '../components/DatePickerPopup.vue'
 import apiClient from '../api/api-client'
@@ -14,30 +15,28 @@ const props = defineProps<{
 const emit = defineEmits(['close', 'success'])
 const projectStore = useProjectStore()
 const partnerStore = usePartnerStore()
+const settingsStore = useSettingsStore()
 
 const currentTab = ref('scope')
 const users = ref<any[]>([])
 const formData = ref({
   name: '',
   partner_id: '',
-  type_id: 'INSTALLATION',
-  status_id: 'PLANNING',
+  type_id: '',
+  status_id: '',
+  arrangement_id: '',
+  assignment_id: '',
   start_date: '',
   end_date: '',
   point_req: 0,
   pic_ids: [] as string[]
 })
 
-const statusOptions = [
-  { id: 'PLANNING', name: 'Planning' },
-  { id: 'IN_PROGRESS', name: 'In Progress' },
-  { id: 'COMPLETED', name: 'Completed' },
-  { id: 'ON_HOLD', name: 'On Hold' }
-]
-
 onMounted(async () => {
   // Fetch dependencies
   partnerStore.fetchPartners()
+  settingsStore.fetchProjectLookups()
+  
   try {
     const res = await apiClient.get('/api/v1/users') // Assumed endpoint
     users.value = res.data
@@ -81,7 +80,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
     <!-- Backdrop -->
     <div class="absolute inset-0 bg-surface-950/40 backdrop-blur-md" @click="emit('close')"></div>
 
@@ -141,19 +140,51 @@ const handleSubmit = async () => {
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Project Name</label>
-                <div class="relative group">
-                  <input v-model="formData.name" type="text" class="premium-input-field" placeholder="e.g. Implementation Phase 1">
+              <div class="space-y-4">
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Project Name</label>
+                  <div class="relative group">
+                    <input v-model="formData.name" type="text" class="premium-input-field" placeholder="e.g. Implementation Phase 1">
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Select Partner Client</label>
+                  <LookupPopup 
+                    v-model="formData.partner_id" 
+                    :options="partnerStore.partners.map(p => ({id: p.partner_id, name: p.name}))" 
+                    label="Select Partner Client"
+                  />
                 </div>
               </div>
-              <div class="space-y-2">
-                <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Select Partner Client</label>
-                <LookupPopup 
-                  v-model="formData.partner_id" 
-                  :options="partnerStore.partners.map(p => ({id: p.partner_id, name: p.name}))" 
-                  label="Select Partner Client"
-                />
+
+              <!-- Configuration Lookups -->
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Project Type</label>
+                    <LookupPopup 
+                      v-model="formData.type_id" 
+                      :options="settingsStore.projectLookups.types.filter(x => x.is_active)" 
+                      label="Project Type"
+                    />
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Assignment</label>
+                    <LookupPopup 
+                      v-model="formData.assignment_id" 
+                      :options="settingsStore.projectLookups.assignments.filter(x => x.is_active)" 
+                      label="Assignment Type"
+                    />
+                  </div>
+                  <div class="space-y-2">
+                    <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Arrangement</label>
+                    <LookupPopup 
+                      v-model="formData.arrangement_id" 
+                      :options="settingsStore.projectLookups.arrangements.filter(x => x.is_active)" 
+                      label="Arrangement Data"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -188,7 +219,7 @@ const handleSubmit = async () => {
                 <label class="text-xs font-bold text-surface-400 uppercase tracking-widest pl-1">Status</label>
                 <LookupPopup 
                   v-model="formData.status_id" 
-                  :options="statusOptions" 
+                  :options="settingsStore.projectLookups.statuses.filter(x => x.is_active)" 
                   label="Project Status"
                 />
               </div>
@@ -239,3 +270,4 @@ const handleSubmit = async () => {
     </div>
   </div>
 </template>
+

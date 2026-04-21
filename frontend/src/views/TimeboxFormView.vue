@@ -65,7 +65,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
     <!-- Backdrop -->
     <div class="absolute inset-0 bg-surface-950/40 backdrop-blur-md" @click="emit('close')"></div>
 
@@ -202,3 +202,4 @@ const handleSubmit = async () => {
     </div>
   </div>
 </template>
+

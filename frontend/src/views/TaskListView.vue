@@ -37,8 +37,7 @@ const getPriorityColor = (id: string) => {
         <h1 class="text-3xl font-bold text-primary tracking-tight italic">Operations <span class="text-accent-cyan">Backlog</span></h1>
         <p class="text-secondary mt-1">Management of specific tasks and deliverables across all projects.</p>
       </div>
-      <button @click="openAddForm" class="btn-primary flex items-center gap-2 bg-gradient-to-r from-accent-emerald to-accent-cyan border-none shadow-lg shadow-accent-cyan/10">
-        <Plus class="w-5 h-5" />
+      <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center justify-center bg-gradient-to-r from-accent-emerald to-accent-cyan border-none shadow-lg shadow-accent-cyan/10">
         New Task
       </button>
     </div>
@@ -82,15 +81,15 @@ const getPriorityColor = (id: string) => {
               <span class="w-2 h-2 rounded-full bg-accent-cyan/40"></span> 
               {{ task.project?.name || 'Unassigned' }}
             </span>
-            <span class="text-xs text-surface-600 flex items-center gap-1">
+            <span class="text-xs text-secondary flex items-center gap-1">
               <Clock class="w-3 h-3" /> {{ task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date' }}
             </span>
           </div>
         </div>
 
-        <div class="flex items-center gap-4 px-4 border-l border-surface-800/50">
+        <div class="flex items-center gap-4 px-4 border-l border-border-app">
            <div class="text-right">
-             <p class="text-[10px] font-bold text-surface-500 uppercase tracking-tighter">Priority</p>
+             <p class="text-[10px] font-bold text-secondary uppercase tracking-tighter">Priority</p>
              <p class="text-xs font-black italic" :class="getPriorityColor(task.priority_id)">{{ task.priority_id }}</p>
            </div>
         </div>
@@ -98,7 +97,7 @@ const getPriorityColor = (id: string) => {
 
       <!-- Empty State -->
       <div v-if="taskStore.tasks.length === 0 && !taskStore.isLoading" class="py-20 text-center glass-card border-dashed">
-        <p class="text-surface-500">No active tasks found in the backlog.</p>
+        <p class="text-secondary">No active tasks found in the backlog.</p>
       </div>
     </div>
 

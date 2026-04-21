@@ -35,22 +35,23 @@
     --brand-primary: 161 72% 48%; /* Emerald 500 */
     --brand-secondary: 199 89% 48%; /* Cyan 500 */
     
-    /* Semantic Dark (Default) */
-    --bg-app: var(--color-surface-950);
-    --bg-card: rgba(15, 23, 42, 0.4);
-    --text-primary: #ffffff;
-    --text-secondary: var(--color-surface-400);
-    --border-app: rgba(30, 41, 59, 0.5);
-    --glass-tint: rgba(255, 255, 255, 0.05);
-  }
-
-  :root.light {
+    /* Semantic Light (Default) */
     --bg-app: #f1f5f9; /* Soft slate background */
     --bg-card: rgba(255, 255, 255, 0.9);
     --text-primary: #1e293b;
     --text-secondary: #64748b;
     --border-app: rgba(148, 163, 184, 0.3);
     --glass-tint: rgba(0, 0, 0, 0.01);
+  }
+
+  .dark {
+    /* Semantic Dark */
+    --bg-app: var(--color-surface-950);
+    --bg-card: rgba(15, 23, 42, 0.4);
+    --text-primary: #ffffff;
+    --text-secondary: var(--color-surface-400);
+    --border-app: rgba(30, 41, 59, 0.5);
+    --glass-tint: rgba(255, 255, 255, 0.05);
   }
 
   * {

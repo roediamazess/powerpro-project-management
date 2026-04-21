@@ -13,24 +13,28 @@ class ProjectType(Base):
     type_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
 class ProjectStatus(Base):
     __tablename__ = "project_statuses"
     status_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
 class ProjectArrangement(Base):
     __tablename__ = "project_arrangements"
     arrangement_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
 class ProjectAssignment(Base):
     __tablename__ = "project_assignments"
     assignment_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
     listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
 # --- Junction Table ---
 class ProjectPIC(Base):
