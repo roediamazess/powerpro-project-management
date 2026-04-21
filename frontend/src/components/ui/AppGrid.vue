@@ -37,7 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const uiStore = useUIStore()
-const emit = defineEmits(['rowClicked', 'rowDoubleClicked'])
+const emit = defineEmits(['rowClicked', 'rowDoubleClicked', 'filterChanged'])
 
 const gridTheme = 'ag-theme-alpine'
 
@@ -56,6 +56,7 @@ const filteredCount = ref(0)
 const updateCount = () => {
   if (gridApi.value) {
     filteredCount.value = gridApi.value.getDisplayedRowCount()
+    emit('filterChanged', filteredCount.value)
   }
 }
 
@@ -88,15 +89,6 @@ const onRowDoubleClicked = (params: any) => {
 
 <template>
   <div class="w-full flex flex-col gap-1" :style="{ height: props.height }">
-    <div v-if="props.quickFilterText" class="flex items-center gap-4 px-1 pb-1">
-      <div class="text-[10px] font-bold text-accent-cyan uppercase tracking-widest">
-        Searching: "{{ props.quickFilterText }}"
-      </div>
-      <div class="h-2 w-px bg-white/10"></div>
-      <div class="text-[10px] font-bold text-accent-cyan uppercase tracking-widest">
-        Total Results: <span class="font-black underline decoration-2 underline-offset-4">{{ filteredCount }}</span>
-      </div>
-    </div>
     <div 
       class="ag-theme-alpine flex-1 rounded-2xl overflow-hidden border"
       :class="uiStore.theme === 'dark' ? 'dark border-surface-700/50' : 'border-surface-200'"

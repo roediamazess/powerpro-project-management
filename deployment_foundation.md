@@ -137,7 +137,36 @@ watch(() => props.quickFilterText, (newVal) => {
 })
 ```
 
-### 11.4 Dark Mode Header Styling (AG Grid)
+### 11.4 Search Context Integration
+Informasi hasil pencarian tidak lagi diletakkan pada badge terpisah di samping kolom search untuk menghindari redundansi visual. Sebaliknya, hasil pencarian harus langsung tercermin pada **Tab Status** yang aktif.
+
+**✅ Standar Implementasi:**
+1. **Single Source of Truth**: Angka jumlah data hanya muncul di dalam komponen Tab.
+2. **Logic Integration**: State `gridResultCount` tetap dipertahankan untuk menyuplai data ke Tab, namun visualisasinya dipusatkan pada badge internal Tab.
+3. **Clean UI Policy**: Header harus tetap bersih dan fokus pada fungsionalitas pencarian tanpa elemen dekoratif tambahan yang berulang.
+
+### 11.5 Status-Based Navigation Tabs (dengan Integrated Counter)
+Modul utama wajib memiliki navigasi Tab yang menggabungkan kategori status dengan jumlah data yang relevan secara real-time.
+
+**✅ Standar Visual & Fungsi:**
+1. **Integrated Counter**: Setiap Tab wajib menampilkan angka jumlah baris (misal: `Progress 12`). Angka ini harus bereaksi terhadap *quick filter* pencarian.
+2. **Logic Sync**: Gunakan hasil dari `api.getDisplayedRowCount()` yang dikirim via event `filterChanged` oleh `AppGrid`.
+3. **Active State**: Tab aktif menggunakan **Gradient Background** (Cyan-to-Emerald/Teal) untuk menegaskan konteks yang sedang dilihat pengguna.
+
+**✅ Pengelompokan Standar:**
+- **Preparation**: (Tentative, Scheduled)
+- **Progress**: (Running)
+- **Documentation**: (Document, Document-Check)
+- **Done**: (Done)
+- **X**: (Cancelled, Rejected)
+- **All**: (Semua Status)
+
+**✅ Standar Visual:**
+- Gunakan efek **Glassmorphism** pada kontainer tab.
+- Tab aktif menggunakan **Gradient Background** (Cyan-to-Emerald) dengan teks putih.
+- Sertakan **Counter Badge** kecil di dalam tab yang aktif untuk menunjukkan sisa beban kerja di status tersebut.
+
+### 11.6 Dark Mode Header Styling (AG Grid)
 
 Header AG Grid di dark mode **harus menggunakan nilai berikut** agar teks terbaca dengan kontras yang baik. Gunakan CSS override dengan spesifisitas tinggi:
 

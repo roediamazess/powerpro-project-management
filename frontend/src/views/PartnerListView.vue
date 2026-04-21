@@ -12,6 +12,27 @@ const currentSearch = ref('')
 const partnerStore = usePartnerStore()
 const isFormOpen = ref(false)
 const selectedPartner = ref<any>(null)
+const selectedTab = ref('ALL')
+const gridResultCount = ref(0)
+
+const STATUSTABS = [
+  { id: 'ACTIVE', name: 'Active', statuses: ['ACTIVE'], color: 'text-accent-emerald' },
+  { id: 'FREEZE', name: 'Freeze', statuses: ['FREEZE'], color: 'text-orange-400' },
+  { id: 'INACTIVE', name: 'Inactive', statuses: ['INACTIVE'], color: 'text-red-400' },
+  { id: 'ALL', name: 'All', statuses: [], color: 'text-primary' }
+]
+
+const filteredItems = computed(() => {
+  let items = partnerStore.partners
+
+  // Status Filter
+  const activeTab = STATUSTABS.find(t => t.id === selectedTab.value)
+  if (activeTab && activeTab.statuses.length > 0) {
+    items = items.filter((p: any) => activeTab.statuses.includes(p.status_id))
+  }
+
+  return items
+})
 
 const columnDefs = [
   { 
@@ -123,14 +144,43 @@ const onRowDoubleClicked = (params: any) => {
       </div>
     </div>
 
+    <!-- Status Tabs -->
+    <div class="flex items-center gap-2 p-1.5 glass rounded-2xl w-fit border-border-app/50 shadow-inner">
+      <button 
+        v-for="tab in STATUSTABS" 
+        :key="tab.id"
+        @click="selectedTab = tab.id"
+        class="relative px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group"
+        :class="[
+          selectedTab === tab.id 
+            ? 'text-white shadow-lg' 
+            : 'text-surface-500 hover:text-primary hover:bg-white/5'
+        ]"
+      >
+        <!-- Active Background -->
+        <div v-if="selectedTab === tab.id" class="absolute inset-0 bg-gradient-to-r from-accent-cyan/80 to-accent-emerald/80 -z-10 animate-in fade-in zoom-in duration-300"></div>
+        
+        <span class="relative flex items-center gap-2">
+          {{ tab.name }}
+          <span 
+            v-if="selectedTab === tab.id" 
+            class="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold"
+          >
+            {{ gridResultCount }}
+          </span>
+        </span>
+      </button>
+    </div>
+
     <!-- Data Grid -->
     <div class="flex-1 min-h-0 relative">
       <AppGrid 
-        :rowData="partnerStore.partners" 
+        :rowData="filteredItems" 
         :columnDefs="columnDefs" 
         :quickFilterText="currentSearch"
         height="100%" 
         @row-double-clicked="onRowDoubleClicked"
+        @filterChanged="(count) => gridResultCount = count"
       />
       
       <!-- Loading Overlay -->

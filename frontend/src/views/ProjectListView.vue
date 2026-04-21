@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useProjectStore } from '../store/project'
 import AppGrid from '../components/ui/AppGrid.vue'
 import ProjectFormView from './ProjectFormView.vue'
@@ -10,11 +10,12 @@ const isFormOpen = ref(false)
 const selectedProject = ref<any>(null)
 const currentSearch = ref('')
 const selectedTab = ref('ALL')
+const gridResultCount = ref(0)
 
 const STATUSTABS = [
   { id: 'PREPARATION', name: 'Preparation', statuses: ['TENTATIVE', 'SCHEDULED'], color: 'text-accent-cyan' },
   { id: 'PROGRESS', name: 'Progress', statuses: ['RUNNING'], color: 'text-accent-emerald' },
-  { id: 'DOCUMENTATION', name: 'Documentation', statuses: ['DOCUMENT', 'DOCUMENT CHECK'], color: 'text-accent-teal' },
+  { id: 'DOCUMENTATION', name: 'Documentation', statuses: ['DOCUMENT', 'DOCUMENT-CHECK'], color: 'text-accent-teal' },
   { id: 'DONE', name: 'Done', statuses: ['DONE'], color: 'text-surface-400' },
   { id: 'X', name: 'X', statuses: ['CANCELLED', 'REJECTED'], color: 'text-red-400' },
   { id: 'ALL', name: 'All', statuses: [], color: 'text-primary' }
@@ -185,6 +186,7 @@ const onRowDoubleClicked = (params: any) => {
         :quickFilterText="currentSearch"
         height="550px" 
         @rowDoubleClicked="onRowDoubleClicked"
+        @filterChanged="(count) => gridResultCount = count"
       />
       
       <div v-if="projectStore.isLoading" class="absolute inset-0 glass flex items-center justify-center z-10 rounded-2xl">
