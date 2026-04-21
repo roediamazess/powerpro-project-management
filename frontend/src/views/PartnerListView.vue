@@ -113,7 +113,7 @@ const onRowDoubleClicked = (params: any) => {
             v-model="currentSearch"
             type="text" 
             placeholder="Search partners..."
-            class="w-48 xl:w-64 bg-surface-500/5 hover:bg-surface-500/10 border border-border-app hover:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 focus:bg-surface-900 transition-all shadow-inner relative"
+            class="w-48 xl:w-64 bg-surface-500/5 hover:bg-surface-500/10 border border-border-app hover:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:outline-none focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/50 focus:bg-bg-card transition-all shadow-inner relative"
           />
         </div>
       </div>

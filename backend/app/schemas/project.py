@@ -1,16 +1,22 @@
 import uuid
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, AliasPath
 
 # --- PIC Schemas ---
 class ProjectPICBase(BaseModel):
     user_id: uuid.UUID
     pic_role: Optional[str] = "MEMBER"
+    arrangement_id: Optional[str] = "SELF"
+    assignment_id: Optional[str] = "SELF"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    total_days: Optional[int] = 1
+    status: Optional[str] = "OPEN"
 
 class ProjectPIC(ProjectPICBase):
-    username: str
-    fullname: str
+    username: str = Field(validation_alias=AliasPath("user", "username"))
+    fullname: str = Field(validation_alias=AliasPath("user", "fullname"))
     model_config = ConfigDict(from_attributes=True)
 
 # --- Project Schemas ---
@@ -22,19 +28,46 @@ class ProjectBase(BaseModel):
     status_id: Optional[str] = "PLANNING"
     arrangement_id: Optional[str] = None
     assignment_id: Optional[str] = None
+    information_id: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     point_req: Optional[float] = 0.0
+    
+    # Extended Fields
+    handover_or: Optional[datetime] = None
+    handover_days: Optional[int] = 0
+    pic_kpi_2: Optional[float] = 0.0
+    
+    check_or: Optional[datetime] = None
+    check_days: Optional[int] = 0
+    officer_kpi2: Optional[float] = 0.0
+    
+    validation_date: Optional[datetime] = None
+    validation_days: Optional[int] = 0
+    okr_kpi2: Optional[float] = 0.0
+    
+    s1_estimation: Optional[datetime] = None
+    s1_over_days: Optional[int] = 0
+    s1_count_email_sent: Optional[int] = 0
+    s2_email_sent: Optional[int] = 0
+    s3_email_sent: Optional[int] = 0
+    
+    pyear: Optional[int] = None
+    pquarter: Optional[int] = None
+    pmonth: Optional[int] = None
+    pweekno: Optional[int] = None
+    pweekofmonth: Optional[int] = None
 
 class ProjectCreate(ProjectBase):
-    pic_ids: List[uuid.UUID] = []
+    pic_assignments: List[ProjectPICBase] = []
 
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     status_id: Optional[str] = None
+    information_id: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
-    pic_ids: Optional[List[uuid.UUID]] = None
+    pic_assignments: Optional[List[ProjectPICBase]] = None
 
 class ProjectPartner(BaseModel):
     partner_id: uuid.UUID
@@ -49,6 +82,6 @@ class Project(ProjectBase):
     created_at: datetime
     updated_at: datetime
     partner: ProjectPartner
-    pics: List[ProjectPIC] = []
+    pic_assignments: List[ProjectPIC] = []
     
     model_config = ConfigDict(from_attributes=True)

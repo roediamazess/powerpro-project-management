@@ -20,7 +20,7 @@ async def read_projects(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 1000,
 ) -> Any:
     """
     Retrieve projects with partners and pics.
@@ -30,7 +30,7 @@ async def read_projects(
         .where(Project.is_deleted == False)
         .options(
             selectinload(Project.partner),
-            selectinload(Project.pics)
+            selectinload(Project.pic_assignments).selectinload(ProjectPIC.user)
         )
         .offset(skip)
         .limit(limit)
@@ -54,25 +54,24 @@ async def create_project(
     """
     # 1. Create Project
     db_obj = Project(
-        **project_in.dict(exclude={"pic_ids"}),
+        **project_in.dict(exclude={"pic_assignments"}),
         created_by=current_user.user_id,
         updated_by=current_user.user_id
     )
     
     # Calculate total days if dates provided
     if db_obj.start_date and db_obj.end_date:
-        db_obj.total_days = (db_obj.end_date - db_obj.start_date).days
+        db_obj.total_days = (db_obj.end_date - db_obj.start_date).days + 1
         
     db.add(db_obj)
     await db.flush()
     
     # 2. Add PICs
-    if project_in.pic_ids:
-        for user_id in project_in.pic_ids:
+    if project_in.pic_assignments:
+        for pa in project_in.pic_assignments:
             pic = ProjectPIC(
                 project_id=db_obj.project_id,
-                user_id=user_id,
-                pic_role="MEMBER"
+                **pa.dict()
             )
             db.add(pic)
             
@@ -82,7 +81,7 @@ async def create_project(
     # Reload with relations
     stmt = select(Project).where(Project.project_id == db_obj.project_id).options(
         selectinload(Project.partner),
-        selectinload(Project.pics)
+        selectinload(Project.pic_assignments).selectinload(ProjectPIC.user)
     )
     result = await db.execute(stmt)
     return result.scalar_one()
@@ -99,7 +98,7 @@ async def read_project(
     """
     stmt = select(Project).where(Project.project_id == id, Project.is_deleted == False).options(
         selectinload(Project.partner),
-        selectinload(Project.pics)
+        selectinload(Project.pic_assignments).selectinload(ProjectPIC.user)
     )
     result = await db.execute(stmt)
     project = result.scalar_one_or_none()
@@ -124,23 +123,26 @@ async def update_project(
     if not db_obj:
         raise HTTPException(status_code=404, detail="Project not found")
     
-    update_data = project_in.dict(exclude_unset=True, exclude={"pic_ids"})
+    update_data = project_in.dict(exclude_unset=True, exclude={"pic_assignments"})
     for field in update_data:
         setattr(db_obj, field, update_data[field])
     
     # Recalculate days
     if db_obj.start_date and db_obj.end_date:
-        db_obj.total_days = (db_obj.end_date - db_obj.start_date).days
+        db_obj.total_days = (db_obj.end_date - db_obj.start_date).days + 1
         
     db_obj.updated_by = current_user.user_id
     
     # Update PICs if provided
-    if project_in.pic_ids is not None:
+    if project_in.pic_assignments is not None:
         # Clear existing
         await db.execute(delete(ProjectPIC).where(ProjectPIC.project_id == id))
         # Add new
-        for user_id in project_in.pic_ids:
-            pic = ProjectPIC(project_id=id, user_id=user_id)
+        for pa in project_in.pic_assignments:
+            pic = ProjectPIC(
+                project_id=id, 
+                **pa.dict()
+            )
             db.add(pic)
             
     db.add(db_obj)
@@ -150,7 +152,7 @@ async def update_project(
     # Reload with relations
     stmt = select(Project).where(Project.project_id == id).options(
         selectinload(Project.partner),
-        selectinload(Project.pics)
+        selectinload(Project.pic_assignments).selectinload(ProjectPIC.user)
     )
     result = await db.execute(stmt)
     return result.scalar_one()

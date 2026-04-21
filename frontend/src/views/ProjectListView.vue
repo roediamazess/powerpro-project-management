@@ -3,18 +3,50 @@ import { onMounted, ref } from 'vue'
 import { useProjectStore } from '../store/project'
 import AppGrid from '../components/ui/AppGrid.vue'
 import ProjectFormView from './ProjectFormView.vue'
-import { Plus, Calendar, Users, RefreshCw, Layers } from 'lucide-vue-next'
+import { Plus, Calendar, Users, RefreshCw, Layers, Search } from 'lucide-vue-next'
 
 const projectStore = useProjectStore()
 const isFormOpen = ref(false)
 const selectedProject = ref<any>(null)
+const currentSearch = ref('')
+const selectedTab = ref('ALL')
+
+const STATUSTABS = [
+  { id: 'PREPARATION', name: 'Preparation', statuses: ['TENTATIVE', 'SCHEDULED'], color: 'text-accent-cyan' },
+  { id: 'PROGRESS', name: 'Progress', statuses: ['RUNNING'], color: 'text-accent-emerald' },
+  { id: 'DOCUMENTATION', name: 'Documentation', statuses: ['DOCUMENT', 'DOCUMENT CHECK'], color: 'text-accent-teal' },
+  { id: 'DONE', name: 'Done', statuses: ['DONE'], color: 'text-surface-400' },
+  { id: 'X', name: 'X', statuses: ['CANCELLED', 'REJECTED'], color: 'text-red-400' },
+  { id: 'ALL', name: 'All', statuses: [], color: 'text-primary' }
+]
+
+const filteredItems = computed(() => {
+  let items = projectStore.projects
+
+  // Status Filter
+  const activeTab = STATUSTABS.find(t => t.id === selectedTab.value)
+  if (activeTab && activeTab.statuses.length > 0) {
+    items = items.filter((p: any) => activeTab.statuses.includes(p.status_id))
+  }
+
+  // Search Filter
+  if (currentSearch.value) {
+    const q = currentSearch.value.toLowerCase()
+    items = items.filter((p: any) => 
+      p.name.toLowerCase().includes(q) || 
+      (p.partner?.name || '').toLowerCase().includes(q)
+    )
+  }
+
+  return items
+})
 
 const columnDefs = [
   { 
     headerName: 'Project Name', field: 'name', sortable: true, filter: true, pinned: 'left',
     cellRenderer: (params: any) => `
       <div class="flex flex-col py-2">
-        <span class="font-bold text-white">${params.value}</span>
+        <span class="font-bold text-primary">${params.value}</span>
         <span class="text-xs text-accent-cyan">${params.data.partner?.name || 'No Partner'}</span>
       </div>
     `
@@ -41,17 +73,17 @@ const columnDefs = [
     `
   },
   {
-    headerName: 'Team', field: 'pics', width: 120,
+    headerName: 'Team', field: 'pic_assignments', width: 220,
     cellRenderer: (params: any) => {
-      if (!params.value || params.value.length === 0) return '<span class="text-xs text-surface-600 italic">No assigned team</span>'
+      if (!params.value || params.value.length === 0) return '<span class="text-xs text-secondary italic">No assigned team</span>'
+      const names = params.value.map((pic: any) => pic.username || 'Anonymous')
       return `
-        <div class="flex -space-x-2 mt-3">
-          ${params.value.slice(0, 3).map((pic: any) => `
-            <div class="w-7 h-7 rounded-full bg-surface-700 border-2 border-surface-900 flex items-center justify-center text-[10px] font-bold text-accent-cyan ring-1 ring-white/5" title="${pic.fullname}">
-              ${pic.fullname.charAt(0)}
-            </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          ${names.map((name: string) => `
+            <span class="px-2 py-0.5 rounded bg-surface-500/10 text-[10px] font-bold text-primary border border-border-app shadow-sm transition-all">
+              ${name}
+            </span>
           `).join('')}
-          ${params.value.length > 3 ? `<div class="w-7 h-7 rounded-full bg-surface-800 border-2 border-surface-900 flex items-center justify-center text-[8px] font-medium text-surface-400">+${params.value.length - 3}</div>` : ''}
         </div>
       `
     }
@@ -81,52 +113,78 @@ const handleFormSuccess = () => {
   isFormOpen.value = false
   projectStore.fetchProjects()
 }
+
+const onRowDoubleClicked = (params: any) => {
+  selectedProject.value = params.data
+  isFormOpen.value = true
+}
 </script>
 
 <template>
   <div class="space-y-8" v-auto-animate>
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-primary tracking-tight italic">Project <span class="text-accent-emerald">Control</span></h1>
-        <p class="text-secondary mt-1">Operational lifecycle, teambuilding, and point achievement monitoring.</p>
-      </div>
+    <div class="flex-none flex items-center justify-between">
       <div class="flex items-center gap-3">
+        <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center gap-2 bg-gradient-to-r from-accent-cyan to-accent-emerald border-none shadow-lg shadow-accent-emerald/10">
+          Add Project
+        </button>
         <button @click="projectStore.fetchProjects()" class="p-3 glass rounded-xl text-secondary hover:text-accent-emerald transition-all">
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': projectStore.isLoading }" />
         </button>
-        <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center justify-center bg-gradient-to-r from-accent-cyan to-accent-emerald">
-          Add Project
-        </button>
+        
+        <!-- Local Search -->
+        <div class="relative group ml-2">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 group-focus-within:text-accent-emerald transition-colors z-10" />
+          <input 
+            v-model="currentSearch"
+            type="text" 
+            placeholder="Search projects..."
+            class="w-48 xl:w-64 bg-surface-500/5 hover:bg-surface-500/10 border border-border-app hover:border-white/10 rounded-xl py-2 pl-9 pr-4 text-sm font-medium focus:outline-none focus:border-accent-emerald/50 focus:ring-1 focus:ring-accent-emerald/50 focus:bg-bg-card transition-all shadow-inner relative"
+          />
+        </div>
+      </div>
+      <div class="text-right">
+        <h1 class="text-3xl font-bold text-primary tracking-tight italic">Project <span class="text-accent-emerald">Control</span></h1>
+        <p class="text-secondary mt-1">Operational lifecycle, teambuilding, and point achievement monitoring.</p>
       </div>
     </div>
 
-    <!-- Stats Bar -->
-    <div class="grid grid-cols-4 gap-4">
-      <div class="glass-card p-4 flex items-center gap-4 border-l-2 border-l-accent-cyan">
-        <div class="p-2 bg-accent-cyan/10 rounded-lg text-accent-cyan"><Layers class="w-5 h-5" /></div>
-        <div><p class="text-[10px] text-secondary font-bold uppercase">Active Projects</p><p class="text-xl font-bold text-primary">{{ projectStore.projects.length }}</p></div>
-      </div>
-      <div class="glass-card p-4 flex items-center gap-4 border-l-2 border-l-orange-400">
-        <div class="p-2 bg-orange-400/10 rounded-lg text-orange-400"><Calendar class="w-5 h-5" /></div>
-        <div><p class="text-[10px] text-secondary font-bold uppercase">Expiring Soon</p><p class="text-xl font-bold text-primary">03</p></div>
-      </div>
-      <div class="glass-card p-4 flex items-center gap-4 border-l-2 border-l-accent-emerald text-accent-emerald">
-        <div class="p-2 bg-accent-emerald/10 rounded-lg"><Users class="w-5 h-5" /></div>
-        <div><p class="text-[10px] text-secondary font-bold uppercase">Total Team Size</p><p class="text-xl font-bold text-primary">12</p></div>
-      </div>
-      <div class="glass-card p-4 flex items-center gap-4 border-l-2 border-l-red-500 text-red-500">
-        <div class="p-2 bg-red-500/10 rounded-lg font-black italic">!</div>
-        <div><p class="text-[10px] text-secondary font-bold uppercase">Kritikal</p><p class="text-xl font-bold text-primary">01</p></div>
-      </div>
+    <!-- Status Tabs -->
+    <div class="flex items-center gap-2 p-1.5 glass rounded-2xl w-fit border-border-app/50 shadow-inner">
+      <button 
+        v-for="tab in STATUSTABS" 
+        :key="tab.id"
+        @click="selectedTab = tab.id"
+        class="relative px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 overflow-hidden group"
+        :class="[
+          selectedTab === tab.id 
+            ? 'text-white shadow-lg' 
+            : 'text-surface-500 hover:text-primary hover:bg-white/5'
+        ]"
+      >
+        <!-- Active Background -->
+        <div v-if="selectedTab === tab.id" class="absolute inset-0 bg-gradient-to-r from-accent-cyan/80 to-accent-emerald/80 -z-10 animate-in fade-in zoom-in duration-300"></div>
+        
+        <span class="relative flex items-center gap-2">
+          {{ tab.name }}
+          <span 
+            v-if="selectedTab === tab.id" 
+            class="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold"
+          >
+            {{ filteredItems.length }}
+          </span>
+        </span>
+      </button>
     </div>
 
     <!-- Data Grid -->
     <div class="relative">
       <AppGrid 
-        :rowData="projectStore.projects" 
+        :rowData="filteredItems" 
         :columnDefs="columnDefs" 
+        :quickFilterText="currentSearch"
         height="550px" 
+        @rowDoubleClicked="onRowDoubleClicked"
       />
       
       <div v-if="projectStore.isLoading" class="absolute inset-0 glass flex items-center justify-center z-10 rounded-2xl">

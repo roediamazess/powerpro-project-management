@@ -57,6 +57,7 @@ class PartnerContact(Base, PowerProBase):
     position: Mapped[Optional[str]] = mapped_column(String(100))
     phone: Mapped[Optional[str]] = mapped_column(String(50))
     email: Mapped[Optional[str]] = mapped_column(String(100))
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
 
     partner: Mapped["Partner"] = relationship(back_populates="contacts")
 

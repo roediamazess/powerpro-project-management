@@ -11,38 +11,10 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.models.auth import User
 from app.schemas.auth import User as UserSchema
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
-async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)) -> User:
-    token = request.cookies.get("access_token")
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-        )
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-            )
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-        )
-    
-    result = await db.execute(select(User).where(User.user_id == user_id))
-    user = result.scalar_one_or_none()
-    
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
 
 @router.post("/login")
 async def login(
@@ -53,7 +25,15 @@ async def login(
     """
     Standard OAuth2 compatible token login, sets an HttpOnly cookie.
     """
-    result = await db.execute(select(User).where(User.email == form_data.username))
+    from sqlalchemy import or_
+    result = await db.execute(
+        select(User).where(
+            or_(
+                User.email == form_data.username,
+                User.username == form_data.username
+            )
+        )
+    )
     user = result.scalar_one_or_none()
     
     if not user or not security.verify_password(form_data.password, user.password_hash):

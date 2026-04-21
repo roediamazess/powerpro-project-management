@@ -10,7 +10,7 @@ from app.models.partner import (
     PartnerSubArea, PartnerSystemVersion, PartnerImplementationType
 )
 from app.models.project import (
-    ProjectType, ProjectStatus, ProjectArrangement, ProjectAssignment
+    ProjectType, ProjectStatus, ProjectArrangement, ProjectAssignment, ProjectInformation
 )
 from app.schemas.lookups import (
     Lookup, LookupCreate, LookupUpdate,
@@ -58,12 +58,29 @@ async def get_project_lookups(
     statuses = (await db.execute(select(ProjectStatus).order_by(ProjectStatus.listindex))).scalars().all()
     arrangements = (await db.execute(select(ProjectArrangement).order_by(ProjectArrangement.listindex))).scalars().all()
     assignments = (await db.execute(select(ProjectAssignment).order_by(ProjectAssignment.listindex))).scalars().all()
+    information = (await db.execute(select(ProjectInformation).order_by(ProjectInformation.listindex))).scalars().all()
 
     return {
         "types": [{"id": x.type_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in types],
         "statuses": [{"id": x.status_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in statuses],
         "arrangements": [{"id": x.arrangement_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in arrangements],
         "assignments": [{"id": x.assignment_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in assignments],
+        "information": [{"id": x.information_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in information],
+    }
+
+@router.get("/user")
+async def get_user_lookups(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Get roles and tiers for user management."""
+    from app.models.auth import Role, Tier
+    roles = (await db.execute(select(Role).order_by(Role.listindex))).scalars().all()
+    tiers = (await db.execute(select(Tier).order_by(Tier.listindex))).scalars().all()
+
+    return {
+        "roles": [{"id": x.role_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in roles],
+        "tiers": [{"id": x.tier_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in tiers],
     }
 
 # --- Generic CRUD Helper Logic ---
@@ -225,4 +242,35 @@ async def create_project_assignment(schema: LookupCreate, db: AsyncSession = Dep
 @router.put("/project-assignments/{id_val}", response_model=Lookup)
 async def update_project_assignment(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
     return await update_lookup(db, ProjectAssignment, "assignment_id", id_val, schema)
+
+# PROJECT INFORMATION
+@router.post("/project-information", response_model=Lookup)
+async def create_project_information(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, ProjectInformation, "information_id", schema)
+
+@router.put("/project-information/{id_val}", response_model=Lookup)
+async def update_project_information(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, ProjectInformation, "information_id", id_val, schema)
+
+# USER ROLES
+@router.post("/roles", response_model=Lookup)
+async def create_role(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    from app.models.auth import Role
+    return await create_lookup(db, Role, "role_id", schema)
+
+@router.put("/roles/{id_val}", response_model=Lookup)
+async def update_role(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    from app.models.auth import Role
+    return await update_lookup(db, Role, "role_id", id_val, schema)
+
+# USER TIERS
+@router.post("/tiers", response_model=Lookup)
+async def create_tier(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    from app.models.auth import Tier
+    return await create_lookup(db, Tier, "tier_id", schema)
+
+@router.put("/tiers/{id_val}", response_model=Lookup)
+async def update_tier(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    from app.models.auth import Tier
+    return await update_lookup(db, Tier, "tier_id", id_val, schema)
 

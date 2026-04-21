@@ -4,6 +4,7 @@ import { useComplianceStore } from '../store/compliance'
 import { useAuthStore } from '../store/auth'
 import { useSettingsStore } from '../store/settings'
 import LookupManager from './settings/LookupManager.vue'
+import UserManager from './settings/UserManager.vue'
 import { 
   Database, FileText, Plus, 
   Trash2, ShieldAlert, Users,
@@ -18,11 +19,14 @@ const settingsStore = useSettingsStore()
 const activeTab = ref('partner_config')
 const activePartnerSubTab = ref('areas')
 const activeProjectSubTab = ref('types')
+const activeUserSubTab = ref('users')
 
 onMounted(() => {
   complianceStore.fetchForms()
   settingsStore.fetchPartnerLookups()
   settingsStore.fetchProjectLookups()
+  settingsStore.fetchUserLookups()
+  settingsStore.fetchUsers()
 })
 
 const isAdmin = () => authStore.user?.role_id === 'ADMIN'
@@ -42,7 +46,16 @@ const projectConfigTabs = [
   { id: 'statuses', label: 'Status States', icon: Activity },
   { id: 'arrangements', label: 'Arrangements', icon: Layers },
   { id: 'assignments', label: 'Assignments', icon: Users },
+  { id: 'information', label: 'Information', icon: FileText },
 ]
+
+const userManagementTabs = [
+  { id: 'users', label: 'Users', icon: Users },
+  { id: 'roles', label: 'Roles', icon: ShieldAlert },
+  { id: 'tiers', icon: Award, label: 'Tiers' }
+]
+
+import { Award } from 'lucide-vue-next'
 </script>
 
 <template>
@@ -77,6 +90,14 @@ const projectConfigTabs = [
           :class="activeTab === 'project_config' ? 'bg-accent-emerald text-surface-950 shadow-lg shadow-accent-emerald/20' : 'text-surface-400 hover:bg-white/5'"
         >
           <Briefcase class="w-4 h-4" /> Project Config
+        </button>
+
+        <button 
+          @click="activeTab = 'user_config'"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm"
+          :class="activeTab === 'user_config' ? 'bg-accent-emerald text-surface-950 shadow-lg shadow-accent-emerald/20' : 'text-surface-400 hover:bg-white/5'"
+        >
+          <Users class="w-4 h-4" /> User Management
         </button>
 
         <button 
@@ -155,6 +176,35 @@ const projectConfigTabs = [
              <LookupManager v-if="activeProjectSubTab === 'statuses'" title="Status States" subtitle="Project lifecycle tracking statuses." :items="settingsStore.projectLookups.statuses" endpoint="project-statuses" />
              <LookupManager v-if="activeProjectSubTab === 'arrangements'" title="Arrangement Models" subtitle="Working methods (Remote, On-site, etc.)" :items="settingsStore.projectLookups.arrangements" endpoint="project-arrangements" />
              <LookupManager v-if="activeProjectSubTab === 'assignments'" title="Assignment Roles" subtitle="Contractual relation roles." :items="settingsStore.projectLookups.assignments" endpoint="project-assignments" />
+             <LookupManager v-if="activeProjectSubTab === 'information'" title="Project Information" subtitle="Additional metadata for project context." :items="settingsStore.projectLookups.information" endpoint="project-information" />
+          </div>
+        </div>
+
+        <!-- User Management Hub -->
+        <div v-else-if="activeTab === 'user_config'" class="flex flex-col flex-1" v-auto-animate>
+          <div class="p-6 border-b border-white/5 bg-surface-950/20">
+             <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                <button 
+                  v-for="sub in userManagementTabs" :key="sub.id"
+                  @click="activeUserSubTab = sub.id"
+                  class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap active:scale-95"
+                  :class="activeUserSubTab === sub.id ? 'bg-white/10 text-white ring-1 ring-white/10 shadow-lg' : 'text-surface-500 hover:text-surface-300'"
+                >
+                  <component :is="sub.icon" class="w-3.5 h-3.5" />
+                  {{ sub.label }}
+                </button>
+             </div>
+          </div>
+
+          <div class="p-8 flex-1">
+             <UserManager 
+               v-if="activeUserSubTab === 'users'" 
+               :users="settingsStore.users" 
+               :roles="settingsStore.userLookups.roles" 
+               :tiers="settingsStore.userLookups.tiers" 
+             />
+             <LookupManager v-if="activeUserSubTab === 'roles'" title="User Roles" subtitle="Security permission hierarchies." :items="settingsStore.userLookups.roles" endpoint="roles" />
+             <LookupManager v-if="activeUserSubTab === 'tiers'" title="Seniority Tiers" subtitle="Employee level and access depth." :items="settingsStore.userLookups.tiers" endpoint="tiers" />
           </div>
         </div>
 

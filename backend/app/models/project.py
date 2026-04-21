@@ -36,14 +36,31 @@ class ProjectAssignment(Base):
     listindex: Mapped[int] = mapped_column(default=0)
     is_active: Mapped[bool] = mapped_column(default=True)
 
+class ProjectInformation(Base):
+    __tablename__ = "project_information"
+    information_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
 # --- Junction Table ---
 class ProjectPIC(Base):
     __tablename__ = "project_pics"
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.project_id"), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
     pic_role: Mapped[Optional[str]] = mapped_column(String(50))
+    arrangement_id: Mapped[str] = mapped_column(String(50), default="SELF")
+    assignment_id: Mapped[str] = mapped_column(String(50), default="SELF")
+    start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    total_days: Mapped[Optional[int]] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20), default="OPEN")
+    
     assigned_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
     is_active: Mapped[bool] = mapped_column(default=True)
+
+    project: Mapped["Project"] = relationship(back_populates="pic_assignments")
+    user: Mapped["User"] = relationship()
 
 # --- Main Tables ---
 class Project(Base, PowerProBase):
@@ -58,6 +75,7 @@ class Project(Base, PowerProBase):
     status_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_statuses.status_id"))
     arrangement_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_arrangements.arrangement_id"))
     assignment_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_assignments.assignment_id"))
+    information_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_information.information_id"))
     
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -66,12 +84,38 @@ class Project(Base, PowerProBase):
     point_ach: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
     point_req: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
     point_percent: Mapped[Optional[float]] = mapped_column(DECIMAL(5,2))
+
+    # Extended Fields
+    handover_or: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    handover_days: Mapped[Optional[int]] = mapped_column(Integer)
+    pic_kpi_2: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
+    
+    check_or: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    check_days: Mapped[Optional[int]] = mapped_column(Integer)
+    officer_kpi2: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
+    
+    validation_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    validation_days: Mapped[Optional[int]] = mapped_column(Integer)
+    okr_kpi2: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
+    
+    s1_estimation: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    s1_over_days: Mapped[Optional[int]] = mapped_column(Integer)
+    s1_count_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
+    s2_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
+    s3_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
+    
+    pyear: Mapped[Optional[int]] = mapped_column(Integer)
+    pquarter: Mapped[Optional[int]] = mapped_column(Integer)
+    pmonth: Mapped[Optional[int]] = mapped_column(Integer)
+    pweekno: Mapped[Optional[int]] = mapped_column(Integer)
+    pweekofmonth: Mapped[Optional[int]] = mapped_column(Integer)
     
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     updated_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"))
 
     # Relationships
     partner: Mapped["Partner"] = relationship(back_populates="projects")
-    pics: Mapped[List["User"]] = relationship(secondary="project_pics")
+    pic_assignments: Mapped[List["ProjectPIC"]] = relationship(back_populates="project", cascade="all, delete-orphan")
+    pics: Mapped[List["User"]] = relationship(secondary="project_pics", viewonly=True)
     tasks: Mapped[List["Task"]] = relationship(back_populates="project")
     compliance_entries: Mapped[List["ComplianceEntry"]] = relationship(back_populates="project")

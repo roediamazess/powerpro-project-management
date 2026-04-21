@@ -7,6 +7,7 @@ const props = defineProps<{
   options: Array<{ id: string | number; name: string }>
   label: string
   placeholder?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -33,6 +34,7 @@ const select = (id: string | number) => {
 }
 
 const open = () => {
+  if (props.disabled) return
   isOpen.value = true
   searchQuery.value = ''
 }
@@ -43,17 +45,18 @@ const open = () => {
     <!-- Trigger -->
     <div 
       @click="open"
-      class="premium-input-field cursor-pointer flex items-center justify-between group hover:border-accent-emerald/20 transition-all shadow-sm"
+      class="premium-input-field flex items-center justify-between group transition-all shadow-sm"
+      :class="disabled ? 'cursor-not-allowed opacity-60 grayscale-[0.5] shadow-none !border-white/5' : 'cursor-pointer hover:border-accent-emerald/20'"
     >
       <span :class="modelValue ? 'text-primary font-bold' : 'text-secondary'">
         {{ selectedName }}
       </span>
-      <ChevronRight class="w-4 h-4 text-secondary group-hover:text-primary transition-colors" />
+      <ChevronRight v-if="!disabled" class="w-4 h-4 text-secondary group-hover:text-primary transition-colors" />
     </div>
 
     <!-- Popup Modal (Teleported to body for absolute stacking) -->
     <Teleport to="body">
-      <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+      <div v-if="isOpen" class="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-surface-950/40 backdrop-blur-sm animate-in fade-in duration-300" @click="isOpen = false"></div>
         

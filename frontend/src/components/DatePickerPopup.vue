@@ -7,6 +7,8 @@ const props = defineProps<{
   label: string
   placeholder?: string
   disabled?: boolean
+  minDate?: string | null
+  maxDate?: string | null
 }>()
 
 const emit = defineEmits(['update:modelValue'])
@@ -40,15 +42,16 @@ const daysInMonth = computed(() => {
     daysArray.push({ day: null, current: false })
   }
   // Current month days
+  const todayIso = new Date().toLocaleDateString('en-CA')
   for (let i = 1; i <= days; i++) {
-    const d = new Date(year, month, i)
-    const iso = d.toISOString().split('T')[0]
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
     daysArray.push({ 
       day: i, 
       iso, 
       current: true,
       selected: props.modelValue === iso,
-      isToday: new Date().toISOString().split('T')[0] === iso
+      isToday: todayIso === iso,
+      isDisabled: (props.minDate && iso < props.minDate) || (props.maxDate && iso > props.maxDate)
     })
   }
   return daysArray
@@ -65,6 +68,8 @@ const changeMonth = (delta: number) => {
 }
 
 const selectDate = (iso: string) => {
+  if (props.minDate && iso < props.minDate) return
+  if (props.maxDate && iso > props.maxDate) return
   emit('update:modelValue', iso)
   isOpen.value = false
 }
@@ -97,7 +102,7 @@ const open = () => {
 
     <!-- Popup Modal -->
     <Teleport to="body">
-      <div v-if="isOpen" class="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      <div v-if="isOpen" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-surface-950/40 backdrop-blur-sm animate-in fade-in duration-300" @click="isOpen = false"></div>
         
@@ -141,7 +146,8 @@ const open = () => {
                    class="w-full h-full rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center relative group"
                    :class="[
                      dayObj.selected ? 'bg-accent-emerald text-white shadow-lg shadow-accent-emerald/20 scale-105' : 'text-primary hover:bg-surface-500/10 hover:text-accent-emerald',
-                     dayObj.isToday && !dayObj.selected ? 'text-accent-emerald ring-1 ring-accent-emerald/20 bg-accent-emerald/5' : ''
+                     dayObj.isToday && !dayObj.selected ? 'text-accent-emerald ring-1 ring-accent-emerald/20 bg-accent-emerald/5' : '',
+                     dayObj.isDisabled ? 'opacity-20 cursor-not-allowed grayscale pointer-events-none' : ''
                    ]"
                 >
                   {{ dayObj.day }}
@@ -156,7 +162,11 @@ const open = () => {
             <button @click="emit('update:modelValue', null); isOpen = false" class="text-[10px] font-bold text-secondary hover:text-red-400 transition-colors uppercase tracking-widest">
               Clear Date
             </button>
-            <button @click="selectDate(new Date().toISOString().split('T')[0])" class="text-[10px] font-bold text-accent-emerald hover:underline transition-colors uppercase tracking-widest">
+            <button 
+              @click="selectDate(new Date().toLocaleDateString('en-CA'))" 
+              class="text-[10px] font-bold text-accent-emerald hover:underline transition-colors uppercase tracking-widest disabled:opacity-20 disabled:no-underline"
+              :disabled="(minDate && new Date().toLocaleDateString('en-CA') < minDate) || (maxDate && new Date().toLocaleDateString('en-CA') > maxDate)"
+            >
               Set Today
             </button>
           </div>

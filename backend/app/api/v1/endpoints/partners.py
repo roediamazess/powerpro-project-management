@@ -18,7 +18,7 @@ async def read_partners(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 1000,
 ) -> Any:
     """
     Retrieve partners.
@@ -52,12 +52,13 @@ async def create_partner(
     db.add(db_obj)
     await db.flush() # Get partner_id
     
-    # 2. Add Contacts if any
     if partner_in.contacts:
         for contact_in in partner_in.contacts:
             contact = PartnerContact(
                 **contact_in.dict(),
-                partner_id=db_obj.partner_id
+                partner_id=db_obj.partner_id,
+                created_by=current_user.user_id,
+                updated_by=current_user.user_id
             )
             db.add(contact)
     
@@ -107,7 +108,6 @@ async def update_partner(
     for field in update_data:
         setattr(db_obj, field, update_data[field])
     
-    # Handle Contacts if provided
     if partner_in.contacts is not None:
         # Delete existing
         await db.execute(delete(PartnerContact).where(PartnerContact.partner_id == id))
@@ -115,7 +115,9 @@ async def update_partner(
         for contact_in in partner_in.contacts:
             contact = PartnerContact(
                 **contact_in.dict(),
-                partner_id=id
+                partner_id=id,
+                created_by=current_user.user_id,  # Keep as original or update? Usually contacts are replaced, so we treat as new
+                updated_by=current_user.user_id
             )
             db.add(contact)
 
