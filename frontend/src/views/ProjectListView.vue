@@ -16,7 +16,7 @@ const uiStore = useUIStore()
 
 const isFormOpen = ref(false)
 const selectedProject = ref<any>(null)
-const selectedTab = ref('ALL')
+const selectedTab = ref('PROGRESS')
 const gridResultCount = ref(0)
 
 /**
