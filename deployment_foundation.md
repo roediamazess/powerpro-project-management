@@ -483,8 +483,12 @@ Untuk modul dengan struktur data bersarang (*nested*) atau kompleks (seperti mod
 2.  **Single Source of Truth**: Gunakan hasil dari satu variabel `computed` yang sama untuk menyuplai:
     *   Properti `:rowData` pada komponen Tabel.
     *   Angka jumlah pada **Tab Badge** (`filteredItems.length`).
-3.  **Smart Indexing**: Bangun variabel target pencarian (`searchTarget`) di dalam fungsi filter yang meratakan (*flatten*) data bersarang menjadi satu string teks panjang (ID, Nama, Partner, Nama Tim, dsb).
-4.  **Bulletproof Validation**: **WAJIB** menggunakan pengecekan `Array.isArray()` dan optional chaining saat memproses data tim/array. Kesalahan pada fungsi filter akan menyebabkan mesin render tabel crash (beku).
+3.  **Visual Alignment (Mandatory)**: Kolom yang menampilkan data ID/Lookup (seperti `type_id` atau `status_id`) **WAJIB** meresolusi ID tersebut menjadi **Nama Manusia** pada fungsi `cellRenderer`. Hal ini memastikan apa yang dicari pengguna di kotak pencarian sesuai dengan apa yang mereka lihat di layar.
+4.  **Smart & Dual Indexing**: Bangun variabel target pencarian (`searchTarget`) yang menggabungkan:
+    *   ID Teknis & Nama Resolusi (misal: "IMP" dan "Implementation").
+    *   Data Bersarang (Flattened Teams/Partners).
+    *   Formatted Dates (misal: "2024-04-22" dan "22 Apr 24").
+5.  **Bulletproof Validation**: **WAJIB** menggunakan pengecekan `Array.isArray()` dan optional chaining saat memproses data tim/array agar mesin render tidak crash.
 
 **✅ Contoh Implementasi Standar (Template):**
 ```javascript
@@ -492,26 +496,23 @@ const filteredItems = computed(() => {
   let items = store.data || []
   const q = currentSearch.value.toLowerCase().trim()
 
-  // 1. Saringan Tab (Status)
-  if (selectedTab.value !== 'ALL') {
-    items = items.filter(p => p.status === selectedTab.value)
-  }
+  return items.filter(p => {
+    // 1. Resolve Display Names
+    const typeName = lookup.types.find(t => t.id === p.type_id)?.name || ''
+    
+    // 2. Format Dates for Search
+    const dateStr = p.date ? new Intl.DateTimeFormat('en-GB').format(new Date(p.date)) : ''
 
-  // 2. Saringan Cerdas (Manual Filter)
-  if (q) {
-    items = items.filter(p => {
-      // Gabungkan semua field indexable (termasuk data nested)
-      const teamStr = Array.isArray(p.teams) ? p.teams.map(t => t.name).join(' ') : ''
-      const searchTarget = `${p.name} ${p.cnc_id} ${p.partner_name} ${teamStr}`.toLowerCase()
-      return searchTarget.includes(q)
-    })
-  }
-  return items
+    // 3. Build Global Index
+    const searchTarget = `${p.name} ${typeName} ${p.type_id} ${dateStr}`.toLowerCase()
+    
+    return searchTarget.includes(q)
+  })
 })
 ```
 
 **✅ Efek Visual yang Diharapkan:**
-Tabel AG Grid tidak boleh lagi memiliki saringan internal yang aktif. Grid hanya bertugas merender apa pun yang dikirimkan oleh Vue. Hal ini menghilangkan "data hantu" (stale data) dan menjamin data di layar selalu sinkron 1:1 dengan Tab.
+Pengguna mendapatkan pengalaman pencarian yang intuitif (apa yang dilihat = apa yang bisa dicari) dengan akurasi angka Tab yang presisi dan instan.
 
 ---
-*Status: Production Ready v2.5 (Smart Search & Sync Certified)*
+*Status: Production Ready v2.6 (Golden Sync & Visual Mapping Certified)*

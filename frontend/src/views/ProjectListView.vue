@@ -45,12 +45,27 @@ const filteredItems = computed(() => {
   // 2. Smart Search Filtering (FORCED VUE-LEVEL)
   if (q) {
     items = items.filter((p: any) => {
-      const typeName = settingsStore.projectLookups?.types?.find((t: any) => String(t.type_id) === String(p.type_id))?.name || ''
-      const statusName = settingsStore.projectLookups?.statuses?.find((s: any) => String(s.status_id) === String(p.status_id))?.name || ''
+      // Find Name from lookup using either id or type_id
+      const typeObj = settingsStore.projectLookups?.types?.find((t: any) => 
+        String(t.type_id || t.id) === String(p.type_id)
+      )
+      const typeName = typeObj?.name || ''
+      const typeId = String(p.type_id || '')
+      
+      const statusObj = settingsStore.projectLookups?.statuses?.find((s: any) => 
+        String(s.status_id || s.id) === String(p.status_id)
+      )
+      const statusName = statusObj?.name || ''
+      
       const teamNames = Array.isArray(p.pic_assignments) ? p.pic_assignments.map((pic: any) => `${pic.username || ''} ${pic.fullname || ''}`).join(' ') : ''
+      
+      // Timeline formatting for search (e.g. "22 Apr 26")
+      const formatDate = (d: any) => d ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).format(new Date(d)) : ''
+      const timelineStr = `${p.start_date || ''} ${p.end_date || ''} ${formatDate(p.start_date)} ${formatDate(p.end_date)}`
+      
       const searchTarget = `
         ${p.name} ${p.cnc_id || ''} ${p.partner?.name || ''} 
-        ${typeName} ${statusName} ${p.status_id} ${teamNames}
+        ${typeName} ${typeId} ${statusName} ${p.status_id} ${teamNames} ${timelineStr}
       `.toLowerCase()
       return searchTarget.includes(q)
     })
@@ -75,9 +90,12 @@ const columnDefs = [
     `
   },
   { 
-    headerName: 'Type', field: 'type_id', width: 120,
-    getQuickFilterText: (params: any) => (settingsStore.projectLookups?.types || []).find(t => String(t.type_id) === String(params.value))?.name || params.value,
-    cellRenderer: (params: any) => `<span class="text-[10px] font-bold text-surface-400 uppercase tracking-wider">${params.value || '-'}</span>`
+    headerName: 'Type', field: 'type_id', width: 130,
+    cellRenderer: (params: any) => {
+      const type = settingsStore.projectLookups?.types?.find((t: any) => String(t.type_id || t.id) === String(params.value))
+      const label = type?.name || params.value || '-'
+      return `<span class="text-[10px] font-bold text-primary uppercase tracking-wider">${label}</span>`
+    }
   },
   { 
     headerName: 'Status', field: 'status_id', width: 130,
