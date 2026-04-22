@@ -30,6 +30,7 @@ const formData = ref({
   end_date: '',
   total_days: 1,
   point_req: 0,
+  status: 'OPEN',
   pic_assignments: [] as any[]
 })
 
@@ -71,18 +72,21 @@ watch([() => formData.value.start_date, () => formData.value.end_date], ([start,
 
   // Validate PIC assignments when Project timeline changes
   formData.value.pic_assignments.forEach(pic => {
+    // If PIC Start is before Project Start, bump it to Project Start
     if (start && pic.start_date && pic.start_date < start) {
-      pic.start_date = ''
-      pic.total_days = 0
+      pic.start_date = start
     }
+    // If PIC End is after Project End, pull it back to Project End
     if (end && pic.end_date && pic.end_date > end) {
-      pic.end_date = ''
-      pic.total_days = 0
+      pic.end_date = end
     }
     // Cross-check: Start cannot be after project End
     if (end && pic.start_date && pic.start_date > end) {
-      pic.start_date = ''
-      pic.total_days = 0
+      pic.start_date = end
+    }
+    // Cross-check: End cannot be before project Start
+    if (start && pic.end_date && pic.end_date < start) {
+      pic.end_date = start
     }
   })
 })
@@ -121,6 +125,7 @@ onMounted(async () => {
   if (props.project) {
     formData.value = { 
       ...props.project,
+      cnc_id: props.project.cnc_id || '',
       information_id: props.project.information_id || '',
       pic_assignments: props.project.pic_assignments?.map((p: any) => ({
         user_id: p.user_id,
@@ -131,8 +136,19 @@ onMounted(async () => {
         end_date: p.end_date || props.project.end_date,
         total_days: p.total_days || props.project.total_days,
         status: p.status || 'OPEN'
-      })) || [] 
+      })) || [],
+      status: props.project.status || 'OPEN'
     }
+
+    // Force date boundaries for PICs on load
+    formData.value.pic_assignments.forEach((pic: any) => {
+      if (formData.value.start_date && pic.start_date && pic.start_date < formData.value.start_date) {
+        pic.start_date = formData.value.start_date
+      }
+      if (formData.value.end_date && pic.end_date && pic.end_date > formData.value.end_date) {
+        pic.end_date = formData.value.end_date
+      }
+    })
   }
 })
 
@@ -189,7 +205,15 @@ const handleSubmit = async () => {
                 <h2 class="text-2xl font-bold text-primary tracking-tight italic">
                   {{ props.project ? 'Refine Project' : 'Initialize New Project' }}
                 </h2>
-                <p class="text-[10px] text-secondary font-black tracking-widest uppercase mt-0.5">Control Module v2.1</p>
+                <div class="flex items-center gap-3 mt-1">
+                  <p class="text-[10px] text-secondary font-black tracking-widest uppercase">Control Module v2.1</p>
+                  <div v-if="formData.status === 'APPROVED'" class="px-2 py-0.5 bg-accent-emerald text-white text-[8px] font-black uppercase tracking-widest rounded-full flex items-center gap-1 shadow-lg shadow-accent-emerald/20">
+                    <CheckCircle class="w-2.5 h-2.5" /> Approved
+                  </div>
+                  <div v-else class="px-2 py-0.5 bg-surface-700 text-surface-400 text-[8px] font-black uppercase tracking-widest rounded-full">
+                    Draft / Open
+                  </div>
+                </div>
               </div>
             </div>
             <button @click="emit('close')" class="p-2 hover:bg-surface-500/10 rounded-xl text-secondary transition-all">
@@ -236,11 +260,11 @@ const handleSubmit = async () => {
                   <div class="grid grid-cols-3 gap-4">
                     <div class="space-y-2 col-span-1">
                       <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">CNC ID</label>
-                      <input v-model="formData.cnc_id" type="text" class="premium-input-field" placeholder="Optional">
+                      <input v-model="formData.cnc_id" type="text" class="premium-input-field" placeholder="Optional" :disabled="formData.status === 'APPROVED'">
                     </div>
                     <div class="space-y-2 col-span-2">
                       <label class="text-[10px] font-black text-secondary uppercase tracking-widest pl-1">Project Name <span class="text-red-500">*</span></label>
-                      <input v-model="formData.name" type="text" class="premium-input-field" placeholder="Target Scope Name">
+                      <input v-model="formData.name" type="text" class="premium-input-field" placeholder="Target Scope Name" :disabled="formData.status === 'APPROVED'">
                     </div>
                   </div>
                   <div class="space-y-2">
@@ -249,6 +273,7 @@ const handleSubmit = async () => {
                       v-model="formData.partner_id" 
                       :options="partnerStore.partners.map(p => ({id: p.partner_id, name: p.name}))" 
                       label="Select Partner Client"
+                      :disabled="formData.status === 'APPROVED'"
                     />
                   </div>
                 </div>
@@ -262,6 +287,7 @@ const handleSubmit = async () => {
                         v-model="formData.type_id" 
                         :options="settingsStore.projectLookups.types.filter(x => x.is_active)" 
                         label="Project Type"
+                        :disabled="formData.status === 'APPROVED'"
                       />
                     </div>
                     <div class="space-y-2">
@@ -270,6 +296,7 @@ const handleSubmit = async () => {
                         v-model="formData.status_id" 
                         :options="settingsStore.projectLookups.statuses.filter(x => x.is_active)" 
                         label="Project Status"
+                        :disabled="formData.status === 'APPROVED'"
                       />
                     </div>
                     <div class="space-y-2 col-span-2">
@@ -278,6 +305,7 @@ const handleSubmit = async () => {
                         v-model="formData.information_id" 
                         :options="settingsStore.projectLookups.information.filter(x => x.is_active)" 
                         label="Project Information"
+                        :disabled="formData.status === 'APPROVED'"
                       />
                     </div>
                   </div>
@@ -298,6 +326,7 @@ const handleSubmit = async () => {
                   <DatePickerPopup 
                     v-model="formData.start_date" 
                     label="Start Date"
+                    :disabled="formData.status === 'APPROVED'"
                   />
                 </div>
                 <div class="space-y-2">
@@ -306,6 +335,7 @@ const handleSubmit = async () => {
                     v-model="formData.end_date" 
                     label="End Date"
                     :minDate="formData.start_date"
+                    :disabled="formData.status === 'APPROVED'"
                   />
                 </div>
                 <div class="space-y-2">
@@ -447,6 +477,18 @@ const handleSubmit = async () => {
 
         <!-- Footer Action Bar (RIGHT ALIGNED) -->
         <div class="p-8 border-t border-border-app bg-surface-500/5 flex flex-row gap-4 items-center justify-end">
+          <!-- Status Toggle -->
+          <button 
+            v-if="props.project"
+            @click="formData.status = formData.status === 'OPEN' ? 'APPROVED' : 'OPEN'"
+            class="h-14 px-6 rounded-2xl border flex items-center gap-2 transition-all font-bold text-xs uppercase tracking-widest"
+            :class="formData.status === 'OPEN' ? 'bg-accent-emerald/10 text-accent-emerald border-accent-emerald/20' : 'bg-orange-500/10 text-orange-500 border-orange-500/20'"
+          >
+            <CheckCircle v-if="formData.status === 'OPEN'" class="w-4 h-4" />
+            <RefreshCw v-else class="w-4 h-4" />
+            {{ formData.status === 'OPEN' ? 'Approve Project' : 'Reopen Project' }}
+          </button>
+
           <!-- Initialize/Save -->
           <button @click="handleSubmit" :disabled="isSubmitting" class="w-auto px-12 h-14 btn-primary bg-gradient-to-r from-accent-emerald to-accent-cyan shadow-xl shadow-accent-emerald/20 flex items-center justify-center gap-3 active:scale-95 transition-all">
             <Save v-if="!isSubmitting" class="w-5 h-5" />

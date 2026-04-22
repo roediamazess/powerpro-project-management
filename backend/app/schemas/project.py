@@ -32,6 +32,7 @@ class ProjectBase(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     point_req: Optional[float] = 0.0
+    status: Optional[str] = "OPEN"
     
     # Extended Fields
     handover_or: Optional[datetime] = None
@@ -63,10 +64,15 @@ class ProjectCreate(ProjectBase):
 
 class ProjectUpdate(BaseModel):
     name: Optional[str] = None
+    cnc_id: Optional[str] = None
+    partner_id: Optional[uuid.UUID] = None
+    type_id: Optional[str] = None
+    status: Optional[str] = None
     status_id: Optional[str] = None
     information_id: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
+    point_req: Optional[float] = None
     pic_assignments: Optional[List[ProjectPICBase]] = None
 
 class ProjectPartner(BaseModel):

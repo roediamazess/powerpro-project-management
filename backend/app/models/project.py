@@ -84,6 +84,7 @@ class Project(Base, PowerProBase):
     point_ach: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
     point_req: Mapped[Optional[float]] = mapped_column(DECIMAL(10,2))
     point_percent: Mapped[Optional[float]] = mapped_column(DECIMAL(5,2))
+    status: Mapped[str] = mapped_column(String(20), default="OPEN")
 
     # Extended Fields
     handover_or: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

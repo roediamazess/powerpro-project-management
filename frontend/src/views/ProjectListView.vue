@@ -1,42 +1,59 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useProjectStore } from '../store/project'
+import { useSettingsStore } from '../store/settings'
+import { useUIStore } from '../store/ui'
 import AppGrid from '../components/ui/AppGrid.vue'
 import ProjectFormView from './ProjectFormView.vue'
-import { Plus, Calendar, Users, RefreshCw, Layers, Search } from 'lucide-vue-next'
+import { RefreshCw, Search } from 'lucide-vue-next'
+
+// Match Partner Pattern: Local Search State
+const currentSearch = ref('')
 
 const projectStore = useProjectStore()
+const settingsStore = useSettingsStore()
+const uiStore = useUIStore()
+
 const isFormOpen = ref(false)
 const selectedProject = ref<any>(null)
-const currentSearch = ref('')
-const selectedTab = ref('PROGRESS')
+const selectedTab = ref('ALL')
 const gridResultCount = ref(0)
 
+/**
+ * Section 11.5 Standardized Status Groups
+ * Mapped to actual database values: PLANNING, SCHEDULED, RUNNING, DOCUMENT, DONE, etc.
+ */
 const STATUSTABS = [
-  { id: 'PREPARATION', name: 'Preparation', statuses: ['TENTATIVE', 'SCHEDULED'], color: 'text-accent-cyan' },
+  { id: 'PREPARATION', name: 'Preparation', statuses: ['PLANNING', 'SCHEDULED'], color: 'text-accent-cyan' },
   { id: 'PROGRESS', name: 'Progress', statuses: ['RUNNING'], color: 'text-accent-emerald' },
-  { id: 'DOCUMENTATION', name: 'Documentation', statuses: ['DOCUMENT', 'DOCUMENT-CHECK'], color: 'text-accent-teal' },
-  { id: 'DONE', name: 'Done', statuses: ['DONE'], color: 'text-surface-400' },
+  { id: 'DOCUMENTATION', name: 'Documentation', statuses: ['DOCUMENT', 'DOCUMENT-CHECK'], color: 'text-orange-400' },
+  { id: 'DONE', name: 'Done', statuses: ['DONE', 'COMPLETED'], color: 'text-primary' },
   { id: 'X', name: 'X', statuses: ['CANCELLED', 'REJECTED'], color: 'text-red-400' },
   { id: 'ALL', name: 'All', statuses: [], color: 'text-primary' }
 ]
 
 const filteredItems = computed(() => {
-  let items = projectStore.projects
+  let items = projectStore.projects || []
+  const q = currentSearch.value.toLowerCase().trim()
 
-  // Status Filter
+  // 1. Status Tab Filtering
   const activeTab = STATUSTABS.find(t => t.id === selectedTab.value)
   if (activeTab && activeTab.statuses.length > 0) {
     items = items.filter((p: any) => activeTab.statuses.includes(p.status_id))
   }
 
-  // Search Filter
-  if (currentSearch.value) {
-    const q = currentSearch.value.toLowerCase()
-    items = items.filter((p: any) => 
-      p.name.toLowerCase().includes(q) || 
-      (p.partner?.name || '').toLowerCase().includes(q)
-    )
+  // 2. Smart Search Filtering (FORCED VUE-LEVEL)
+  if (q) {
+    items = items.filter((p: any) => {
+      const typeName = settingsStore.projectLookups?.types?.find((t: any) => String(t.type_id) === String(p.type_id))?.name || ''
+      const statusName = settingsStore.projectLookups?.statuses?.find((s: any) => String(s.status_id) === String(p.status_id))?.name || ''
+      const teamNames = Array.isArray(p.pic_assignments) ? p.pic_assignments.map((pic: any) => `${pic.username || ''} ${pic.fullname || ''}`).join(' ') : ''
+      const searchTarget = `
+        ${p.name} ${p.cnc_id || ''} ${p.partner?.name || ''} 
+        ${typeName} ${statusName} ${p.status_id} ${teamNames}
+      `.toLowerCase()
+      return searchTarget.includes(q)
+    })
   }
 
   return items
@@ -44,44 +61,73 @@ const filteredItems = computed(() => {
 
 const columnDefs = [
   { 
+    headerName: 'CNC ID', field: 'cnc_id', width: 90, pinned: 'left',
+    cellRenderer: (params: any) => `<span class="text-[11px] font-black text-accent-emerald tracking-tighter uppercase font-sans">${params.value || '-'}</span>`
+  },
+  { 
     headerName: 'Project Name', field: 'name', sortable: true, filter: true, pinned: 'left',
+    getQuickFilterText: (params: any) => `${params.value} ${params.data.partner?.name || ''}`,
     cellRenderer: (params: any) => `
       <div class="flex flex-col py-2">
         <span class="font-bold text-primary">${params.value}</span>
-        <span class="text-xs text-accent-cyan">${params.data.partner?.name || 'No Partner'}</span>
+        <span class="text-xs text-accent-cyan font-medium">${params.data.partner?.name || 'No Partner'}</span>
       </div>
     `
   },
   { 
+    headerName: 'Type', field: 'type_id', width: 120,
+    getQuickFilterText: (params: any) => (settingsStore.projectLookups?.types || []).find(t => String(t.type_id) === String(params.value))?.name || params.value,
+    cellRenderer: (params: any) => `<span class="text-[10px] font-bold text-surface-400 uppercase tracking-wider">${params.value || '-'}</span>`
+  },
+  { 
     headerName: 'Status', field: 'status_id', width: 130,
+    getQuickFilterText: (params: any) => (settingsStore.projectLookups?.statuses || []).find(s => String(s.status_id) === String(params.value))?.name || params.value,
     cellRenderer: (params: any) => {
       const colors: any = { 
         PLANNING: 'text-surface-400 bg-surface-400/10', 
-        IN_PROGRESS: 'text-accent-cyan bg-accent-cyan/10 border-accent-cyan/20', 
-        COMPLETED: 'text-accent-emerald bg-accent-emerald/10',
+        SCHEDULED: 'text-accent-cyan bg-accent-cyan/10 border-accent-cyan/20',
+        RUNNING: 'text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20', 
+        DONE: 'text-primary bg-primary/10',
         ON_HOLD: 'text-orange-400 bg-orange-400/10'
       }
       const color = colors[params.value] || 'text-surface-500 bg-surface-500/10'
-      return `<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${color}">${params.value.replace('_', ' ')}</span>`
+      return `<span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${color}">${params.value?.replace('_', ' ') || ''}</span>`
     }
   },
-  {
-    headerName: 'Progress', field: 'point_percent', width: 150,
-    cellRenderer: (params: any) => `
-      <div class="w-full bg-surface-800 h-1.5 rounded-full mt-5 relative overflow-hidden">
-        <div class="bg-gradient-to-r from-accent-cyan to-accent-emerald h-full rounded-full transition-all" style="width: ${params.value || 0}%"></div>
-      </div>
-    `
+  { 
+    headerName: 'Timeline', field: 'start_date', width: 180,
+    getQuickFilterText: (params: any) => `${params.data.start_date || ''} ${params.data.end_date || ''}`,
+    cellRenderer: (params: any) => {
+      if (!params.data.start_date) return '-'
+      const formatDate = (d: any) => new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }).format(new Date(d))
+      const start = formatDate(params.data.start_date)
+      const end = params.data.end_date ? formatDate(params.data.end_date) : 'TBD'
+      return `
+        <div class="flex items-center gap-2 font-bold tracking-tighter text-[11px] font-sans">
+          <span class="text-accent-cyan/70">${start}</span>
+          <span class="text-surface-400">→</span>
+          <span class="text-accent-emerald/70">${end}</span>
+        </div>
+      `
+    }
   },
+  { headerName: 'Days', field: 'total_days', width: 80 },
   {
     headerName: 'Team', field: 'pic_assignments', width: 220,
+    // THE KOMENG FIX: Ensure we check Array.isArray to prevent filter engine crashes on invalid data
+    getQuickFilterText: (params: any) => {
+      if (!Array.isArray(params.value)) return ''
+      return params.value.map((p: any) => `${p.username || ''} ${p.fullname || ''}`).join(' ')
+    },
     cellRenderer: (params: any) => {
-      if (!params.value || params.value.length === 0) return '<span class="text-xs text-secondary italic">No assigned team</span>'
-      const names = params.value.map((pic: any) => pic.username || 'Anonymous')
+      const teamData = params.data.pic_assignments
+      const names = Array.isArray(teamData) ? teamData.map((p: any) => p.username || 'Unknown') : []
+      if (names.length === 0) return `<span class="text-secondary italic text-xs">No Team</span>`
+      
       return `
-        <div class="flex flex-wrap gap-1 mt-2">
+        <div class="flex flex-wrap gap-1 py-1">
           ${names.map((name: string) => `
-            <span class="px-2 py-0.5 rounded bg-surface-500/10 text-[10px] font-bold text-primary border border-border-app shadow-sm transition-all">
+            <span class="px-2 py-0.5 bg-surface-500/10 text-secondary text-[10px] font-black uppercase rounded-full border border-border-app tracking-tighter">
               ${name}
             </span>
           `).join('')}
@@ -89,20 +135,20 @@ const columnDefs = [
       `
     }
   },
-  { 
-    headerName: 'Timeline', field: 'start_date', width: 180,
+  {
+    headerName: 'Appr.', field: 'status', width: 100,
     cellRenderer: (params: any) => {
-      if (!params.data.start_date) return '-'
-      const start = new Date(params.data.start_date).toLocaleDateString()
-      const end = params.data.end_date ? new Date(params.data.end_date).toLocaleDateString() : 'TBD'
-      return `<div class="text-[10px] font-medium text-surface-400 mt-2">${start} → ${end}</div>`
+      const isApproved = params.value === 'APPROVED'
+      const color = isApproved ? 'text-accent-emerald bg-accent-emerald/10 border-accent-emerald/30' : 'text-surface-500 bg-surface-500/10 border-white/5'
+      const icon = isApproved ? '✓' : '○'
+      return `<div class="flex items-center justify-center h-full"><span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter border ${color}">${icon} ${params.value}</span></div>`
     }
-  },
-  { headerName: 'Days', field: 'total_days', width: 80 }
+  }
 ]
 
-onMounted(() => {
-  projectStore.fetchProjects()
+onMounted(async () => {
+  await projectStore.fetchProjects()
+  await settingsStore.fetchProjectLookups()
 })
 
 const openAddForm = () => {
@@ -122,8 +168,8 @@ const onRowDoubleClicked = (params: any) => {
 </script>
 
 <template>
-  <div class="space-y-8" v-auto-animate>
-    <!-- Header -->
+  <div class="h-full flex flex-col space-y-4 pb-2">
+    <!-- Header Decor & Title -->
     <div class="flex-none flex items-center justify-between">
       <div class="flex items-center gap-3">
         <button @click="openAddForm" class="btn-primary !w-auto px-8 flex items-center gap-2 bg-gradient-to-r from-accent-cyan to-accent-emerald border-none shadow-lg shadow-accent-emerald/10">
@@ -133,7 +179,7 @@ const onRowDoubleClicked = (params: any) => {
           <RefreshCw class="w-5 h-5" :class="{ 'animate-spin': projectStore.isLoading }" />
         </button>
         
-        <!-- Local Search -->
+        <!-- Local Search - Partner Reference Style -->
         <div class="relative group ml-2">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-500 group-focus-within:text-accent-emerald transition-colors z-10" />
           <input 
@@ -150,7 +196,7 @@ const onRowDoubleClicked = (params: any) => {
       </div>
     </div>
 
-    <!-- Status Tabs -->
+    <!-- Status Tabs - Standard 11.5 Section -->
     <div class="flex items-center gap-2 p-1.5 glass rounded-2xl w-fit border-border-app/50 shadow-inner">
       <button 
         v-for="tab in STATUSTABS" 
@@ -178,15 +224,13 @@ const onRowDoubleClicked = (params: any) => {
       </button>
     </div>
 
-    <!-- Data Grid -->
-    <div class="relative">
+    <!-- Data Grid - Pure Vue Managed Filter (GURANTEED SYNC) -->
+    <div class="flex-1 min-h-0 relative">
       <AppGrid 
         :rowData="filteredItems" 
         :columnDefs="columnDefs" 
-        :quickFilterText="currentSearch"
-        height="550px" 
-        @rowDoubleClicked="onRowDoubleClicked"
-        @filterChanged="(count) => gridResultCount = count"
+        height="100%" 
+        @row-double-clicked="onRowDoubleClicked"
       />
       
       <div v-if="projectStore.isLoading" class="absolute inset-0 glass flex items-center justify-center z-10 rounded-2xl">
@@ -194,7 +238,7 @@ const onRowDoubleClicked = (params: any) => {
       </div>
     </div>
 
-    <!-- Form Slide-over -->
+    <!-- Modals -->
     <ProjectFormView 
       v-if="isFormOpen" 
       :project="selectedProject"

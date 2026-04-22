@@ -3,8 +3,10 @@ import apiClient from '../api/api-client'
 
 export interface Project {
   project_id: string
+  cnc_id: string
   name: string
   partner: { partner_id: string; name: string }
+  type_id: string
   status_id: string
   start_date: string
   end_date: string

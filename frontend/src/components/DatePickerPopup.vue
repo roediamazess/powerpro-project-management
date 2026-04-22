@@ -42,18 +42,21 @@ const daysInMonth = computed(() => {
     daysArray.push({ day: null, current: false })
   }
   // Current month days
-  const todayIso = new Date().toLocaleDateString('en-CA')
-  for (let i = 1; i <= days; i++) {
-    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
-    daysArray.push({ 
-      day: i, 
-      iso, 
-      current: true,
-      selected: props.modelValue === iso,
-      isToday: todayIso === iso,
-      isDisabled: (props.minDate && iso < props.minDate) || (props.maxDate && iso > props.maxDate)
-    })
-  }
+    const todayIso = new Date().toLocaleDateString('en-CA')
+    const normMin = props.minDate ? props.minDate.split('T')[0] : null
+    const normMax = props.maxDate ? props.maxDate.split('T')[0] : null
+    
+    for (let i = 1; i <= days; i++) {
+      const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`
+      daysArray.push({ 
+        day: i, 
+        iso, 
+        current: true,
+        selected: props.modelValue === iso,
+        isToday: todayIso === iso,
+        isDisabled: (normMin && iso < normMin) || (normMax && iso > normMax)
+      })
+    }
   return daysArray
 })
 
@@ -68,8 +71,11 @@ const changeMonth = (delta: number) => {
 }
 
 const selectDate = (iso: string) => {
-  if (props.minDate && iso < props.minDate) return
-  if (props.maxDate && iso > props.maxDate) return
+  const normMin = props.minDate ? props.minDate.split('T')[0] : null
+  const normMax = props.maxDate ? props.maxDate.split('T')[0] : null
+  
+  if (normMin && iso < normMin) return
+  if (normMax && iso > normMax) return
   emit('update:modelValue', iso)
   isOpen.value = false
 }
@@ -165,7 +171,7 @@ const open = () => {
             <button 
               @click="selectDate(new Date().toLocaleDateString('en-CA'))" 
               class="text-[10px] font-bold text-accent-emerald hover:underline transition-colors uppercase tracking-widest disabled:opacity-20 disabled:no-underline"
-              :disabled="(minDate && new Date().toLocaleDateString('en-CA') < minDate) || (maxDate && new Date().toLocaleDateString('en-CA') > maxDate)"
+              :disabled="(props.minDate && new Date().toLocaleDateString('en-CA') < props.minDate.split('T')[0]) || (props.maxDate && new Date().toLocaleDateString('en-CA') > props.maxDate.split('T')[0])"
             >
               Set Today
             </button>

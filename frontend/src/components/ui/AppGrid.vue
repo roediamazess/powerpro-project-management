@@ -60,23 +60,21 @@ const updateCount = () => {
   }
 }
 
+const processedColumnDefs = computed(() => {
+  return props.columnDefs.map((col: any) => ({
+    filter: true,
+    sortable: true,
+    resizable: true,
+    ...col,
+  }))
+})
+
 const onGridReady = (params: any) => {
   gridApi.value = params.api
-  if (props.quickFilterText) {
-    gridApi.value.setGridOption('quickFilterText', props.quickFilterText)
-  }
   updateCount()
 }
 
-watch(() => props.quickFilterText, (newVal) => {
-  if (gridApi.value) {
-    gridApi.value.setGridOption('quickFilterText', newVal ?? '')
-    setTimeout(updateCount, 0)
-  }
-}, { immediate: false })
-
 const onRowClicked = (params: any) => {
-  // Deselect all, then select clicked row
   params.api.deselectAll()
   params.node.setSelected(true)
   emit('rowClicked', params)
@@ -96,7 +94,7 @@ const onRowDoubleClicked = (params: any) => {
       <ag-grid-vue
         class="h-full w-full"
         :rowData="props.rowData"
-        :columnDefs="props.columnDefs"
+        :columnDefs="processedColumnDefs"
         :defaultColDef="defaultColDef"
         :animateRows="true"
         :suppressCellFocus="true"
@@ -266,4 +264,15 @@ const onRowDoubleClicked = (params: any) => {
 }
 
 .dark .ag-filter-wrapper input { color: white !important; }
+
+/* ===== VERTICAL CENTERING ===== */
+.ag-theme-alpine .ag-row .ag-cell {
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Ensure multi-line cell renderers also behave correctly */
+.ag-theme-alpine .ag-row .ag-cell > div {
+  width: 100%;
+}
 </style>

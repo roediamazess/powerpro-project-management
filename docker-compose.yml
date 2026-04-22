@@ -33,8 +33,8 @@ services:
     environment:
       POSTGRES_SERVER: db
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-powerpro_db}
-#    volumes:
-#      - ./backend/app:/app/app # For hot-reloading if needed (optional)
+    volumes:
+      - ./backend/app:/app/app # For hot-reloading if needed (optional)
 
 
 
