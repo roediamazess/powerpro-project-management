@@ -60,12 +60,23 @@ const router = createRouter({
           component: () => import('../views/LoginView.vue')
         }
       ]
+    },
+    {
+      path: '/t/:id',
+      name: 'training-attendance',
+      component: () => import('../views/TrainingAttendanceView.vue'),
+      meta: { isPublic: true }
     }
   ]
 })
 
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
+  
+  if (to.meta.isPublic) {
+    next()
+    return
+  }
   
   // Optionally fetch user if not already authenticated but session might exist
   if (!authStore.isAuthenticated && to.name !== 'login') {

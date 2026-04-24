@@ -69,15 +69,7 @@ const columnDefs = [
       return `<span class="px-2 py-0.5 rounded-lg bg-surface-500/10 text-[10px] font-black text-secondary uppercase">${version?.name || params.value || '-'}</span>`
     }
   },
-  { 
-    headerName: 'System Type', 
-    field: 'imp_type_id', 
-    width: 140,
-    cellRenderer: (params: any) => {
-      const type = partnerStore.lookups.imp_types.find(t => t.id === params.value)
-      return `<span class="text-accent-emerald font-bold">${type?.name || params.value || '-'}</span>`
-    }
-  },
+
   { 
     headerName: 'Group', 
     field: 'group_id', 
@@ -90,6 +82,16 @@ const columnDefs = [
       return `<span class="font-semibold text-primary">${label}</span>`
     }
   },
+  { 
+    headerName: 'Server Info', 
+    field: 'server_information_id', 
+    width: 150,
+    cellRenderer: (params: any) => {
+      const info = partnerStore.lookups.server_info.find(v => v.id === params.value)
+      return `<span class="px-2 py-0.5 rounded-lg bg-accent-cyan/10 text-[10px] font-black text-accent-cyan uppercase tracking-tighter">${info?.name || params.value || '-'}</span>`
+    }
+  },
+
 ]
 
 onMounted(async () => {

@@ -10,7 +10,8 @@ export const useSettingsStore = defineStore('settings', {
       areas: [] as any[],
       sub_areas: [] as any[],
       versions: [] as any[],
-      imp_types: [] as any[]
+      imp_types: [] as any[],
+      server_info: [] as any[]
     },
     projectLookups: {
       types: [] as any[],

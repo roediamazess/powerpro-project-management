@@ -45,7 +45,6 @@ const defaultColDef = {
   sortable: true,
   filter: true,
   resizable: true,
-  flex: 1,
   wrapText: true,
   autoHeight: true,
 }
@@ -71,8 +70,26 @@ const processedColumnDefs = computed(() => {
 
 const onGridReady = (params: any) => {
   gridApi.value = params.api
+  if (props.quickFilterText) {
+    gridApi.value.setGridOption('quickFilterText', props.quickFilterText)
+  }
   updateCount()
 }
+
+// Watch for column definition changes to force AG Grid internal update
+watch(() => props.columnDefs, (newDefs) => {
+  if (gridApi.value && newDefs) {
+    gridApi.value.setGridOption('columnDefs', processedColumnDefs.value)
+  }
+}, { deep: true })
+
+watch(() => props.quickFilterText, (newVal) => {
+  if (gridApi.value) {
+    gridApi.value.setGridOption('quickFilterText', newVal ?? '')
+    // Force immediate count update for Partners module
+    setTimeout(updateCount, 50)
+  }
+}, { immediate: false })
 
 const onRowClicked = (params: any) => {
   params.api.deselectAll()

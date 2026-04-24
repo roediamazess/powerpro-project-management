@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { X, Save, Users, RefreshCw, Layers, CheckCircle, Plus } from 'lucide-vue-next'
+import { X, Save, Users, RefreshCw, Layers, CheckCircle, Plus, AlertCircle, QrCode } from 'lucide-vue-next'
 import { useProjectStore } from '../store/project'
 import { usePartnerStore } from '../store/partner'
 import { useSettingsStore } from '../store/settings'
 import LookupPopup from '../components/LookupPopup.vue'
 import DatePickerPopup from '../components/DatePickerPopup.vue'
+import TrainingManagerModal from '../components/TrainingManagerModal.vue'
 import apiClient from '../api/api-client'
+
+const showTrainingManager = ref(false)
 
 const props = defineProps<{
   project?: any
@@ -31,7 +34,25 @@ const formData = ref({
   total_days: 1,
   point_req: 0,
   status: 'OPEN',
-  pic_assignments: [] as any[]
+  pic_assignments: [] as any[],
+  
+  // Document Tracking Fields
+  handover_or: '',
+  handover_days: 0,
+  pic_kpi_2: 0,
+  check_or: '',
+  check_days: 0,
+  officer_kpi2: 0,
+  validation_date: '',
+  validation_days: 0,
+  okr_kpi2: 0,
+
+  // Automation Reminders Fields
+  s1_estimation: '',
+  s1_over_days: 0,
+  s1_count_email_sent: '',
+  s2_email_sent: '',
+  s3_email_sent: ''
 })
 
 const addPIC = () => {
@@ -109,6 +130,51 @@ watch(() => formData.value.pic_assignments, (pics) => {
   })
 }, { deep: true })
 
+// Document Tracking Calculations
+watch(() => formData.value.handover_or, (val) => {
+  if (val && formData.value.end_date) {
+    const start = new Date(formData.value.end_date)
+    const end = new Date(val)
+    const diff = end.getTime() - start.getTime()
+    formData.value.handover_days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  } else {
+    formData.value.handover_days = 0
+  }
+})
+
+watch(() => formData.value.check_or, (val) => {
+  if (val && formData.value.handover_or) {
+    const start = new Date(formData.value.handover_or)
+    const end = new Date(val)
+    const diff = end.getTime() - start.getTime()
+    formData.value.check_days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  } else {
+    formData.value.check_days = 0
+  }
+})
+
+watch(() => formData.value.validation_date, (val) => {
+  if (val && formData.value.check_or) {
+    const start = new Date(formData.value.check_or)
+    const end = new Date(val)
+    const diff = end.getTime() - start.getTime()
+    formData.value.validation_days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  } else {
+    formData.value.validation_days = 0
+  }
+})
+
+watch(() => formData.value.s1_estimation, (val) => {
+  if (val && formData.value.end_date) {
+    const start = new Date(formData.value.end_date)
+    const end = new Date(val)
+    const diff = end.getTime() - start.getTime()
+    formData.value.s1_over_days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  } else {
+    formData.value.s1_over_days = 0
+  }
+})
+
 onMounted(async () => {
   // Fetch dependencies
   partnerStore.fetchPartners()
@@ -129,7 +195,6 @@ onMounted(async () => {
       information_id: props.project.information_id || '',
       pic_assignments: props.project.pic_assignments?.map((p: any) => ({
         user_id: p.user_id,
-        pic_role: p.pic_role || 'MEMBER',
         arrangement_id: p.arrangement_id || 'SELF',
         assignment_id: p.assignment_id || 'SELF',
         start_date: p.start_date || props.project.start_date,
@@ -235,6 +300,20 @@ const handleSubmit = async () => {
               :class="currentTab === 'team' ? 'bg-accent-emerald/10 text-accent-emerald ring-1 ring-accent-emerald/20 shadow-lg' : 'text-secondary hover:text-primary'"
             >
               Team Assignment
+            </button>
+            <button 
+              @click="currentTab = 'document'"
+              class="px-6 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center gap-2"
+              :class="currentTab === 'document' ? 'bg-orange-400/10 text-orange-400 ring-1 ring-orange-400/20 shadow-lg' : 'text-secondary hover:text-primary'"
+            >
+              Document Tracking
+            </button>
+            <button 
+              @click="currentTab = 'automation'"
+              class="px-6 py-2.5 text-sm font-bold rounded-xl transition-all flex items-center gap-2"
+              :class="currentTab === 'automation' ? 'bg-accent-amber/10 text-accent-amber ring-1 ring-accent-amber/20 shadow-lg' : 'text-secondary hover:text-primary'"
+            >
+              Automation Reminders
             </button>
           </div>
         </div>
@@ -473,10 +552,173 @@ const handleSubmit = async () => {
                 </div>
              </div>
           </div>
+
+          <!-- Tab 3: Document Tracking -->
+          <div v-if="currentTab === 'document'" class="space-y-10 py-4 animate-in fade-in zoom-in duration-300">
+            <section class="space-y-8">
+              <div class="flex items-center gap-4">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-orange-400/20"></div>
+                <h3 class="text-[10px] font-black text-orange-400 uppercase tracking-[0.2em]">SLA & Tracking lifecycle</h3>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-orange-400/20"></div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Step 1: Handover -->
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-secondary uppercase tracking-widest">01. Handover</span>
+                    <span class="px-2 py-0.5 rounded-md bg-orange-400/10 text-orange-400 text-[8px] font-bold">Phase 1</span>
+                  </div>
+                  <div class="space-y-4">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Handover Date (OR)</label>
+                      <DatePickerPopup v-model="formData.handover_or" label="Handover Date" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Delay Days</label>
+                        <div class="h-10 premium-input-field flex items-center justify-center text-xs font-black" :class="formData.handover_days > 0 ? 'text-red-400' : 'text-accent-cyan'">
+                          {{ formData.handover_days }} D
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">PIC KPI 2</label>
+                        <input v-model="formData.pic_kpi_2" type="number" class="h-10 premium-input-field" placeholder="0">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 2: Check -->
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-secondary uppercase tracking-widest">02. Review / Check</span>
+                    <span class="px-2 py-0.5 rounded-md bg-orange-400/10 text-orange-400 text-[8px] font-bold">Phase 2</span>
+                  </div>
+                  <div class="space-y-4">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Check Date (OR)</label>
+                      <DatePickerPopup v-model="formData.check_or" label="Check Date" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Process Days</label>
+                        <div class="h-10 premium-input-field flex items-center justify-center text-xs font-black text-accent-emerald">
+                          {{ formData.check_days }} D
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Officer KPI 2</label>
+                        <input v-model="formData.officer_kpi2" type="number" class="h-10 premium-input-field" placeholder="0">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Step 3: Validation -->
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-secondary uppercase tracking-widest">03. Validation</span>
+                    <span class="px-2 py-0.5 rounded-md bg-orange-400/10 text-orange-400 text-[8px] font-bold">Phase 3</span>
+                  </div>
+                  <div class="space-y-4">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Validation Date</label>
+                      <DatePickerPopup v-model="formData.validation_date" label="Validation Date" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Final Days</label>
+                        <div class="h-10 premium-input-field flex items-center justify-center text-xs font-black text-primary">
+                          {{ formData.validation_days }} D
+                        </div>
+                      </div>
+                      <div class="space-y-2">
+                        <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">OKR KPI 2</label>
+                        <input v-model="formData.okr_kpi2" type="number" class="h-10 premium-input-field" placeholder="0">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Tab 4: Automation Reminders -->
+          <div v-if="currentTab === 'automation'" class="space-y-10 py-4 animate-in fade-in zoom-in duration-300">
+            <section class="space-y-8">
+              <div class="flex items-center gap-4">
+                <div class="h-px flex-1 bg-gradient-to-r from-transparent to-accent-amber/20"></div>
+                <h3 class="text-[10px] font-black text-accent-amber uppercase tracking-[0.2em]">Automated notification tracking</h3>
+                <div class="h-px flex-1 bg-gradient-to-l from-transparent to-accent-amber/20"></div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- S1: Estimation -->
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-secondary uppercase tracking-widest">S1. Stage Estimation</span>
+                    <span class="px-2 py-0.5 rounded-md bg-accent-amber/10 text-accent-amber text-[8px] font-bold">Automation</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">S1 Estimation</label>
+                      <DatePickerPopup v-model="formData.s1_estimation" label="S1 Estimation" />
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">Over Days</label>
+                      <div class="h-10 premium-input-field flex items-center justify-center text-xs font-black" :class="formData.s1_over_days > 0 ? 'text-red-400' : 'text-accent-cyan'">
+                        {{ formData.s1_over_days }} D
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Email Sent Tracking -->
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-6">
+                  <div class="flex items-center justify-between">
+                    <span class="text-[9px] font-black text-secondary uppercase tracking-widest">Notification History</span>
+                    <span class="px-2 py-0.5 rounded-md bg-accent-amber/10 text-accent-amber text-[8px] font-bold">Log Tracking</span>
+                  </div>
+                  <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">S1 Email Sent Count</label>
+                      <input v-model="formData.s1_count_email_sent" type="text" class="h-10 premium-input-field" placeholder="Ex: 1 time, 2 times...">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-6 rounded-[32px] bg-surface-500/5 border border-white/5 space-y-4 md:col-span-2">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">S2 Email Sent Log</label>
+                      <input v-model="formData.s2_email_sent" type="text" class="h-10 premium-input-field" placeholder="Status email S2...">
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-[9px] font-black text-secondary uppercase tracking-widest pl-1">S3 Email Sent Log</label>
+                      <input v-model="formData.s3_email_sent" type="text" class="h-10 premium-input-field" placeholder="Status email S3...">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         </div>
 
         <!-- Footer Action Bar (RIGHT ALIGNED) -->
         <div class="p-8 border-t border-border-app bg-surface-500/5 flex flex-row gap-4 items-center justify-end">
+          <!-- Training List (LEFT ALIGNED) -->
+          <div class="flex-1 flex justify-start">
+            <button 
+              v-if="props.project"
+              @click="showTrainingManager = true"
+              class="h-14 px-8 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 text-primary transition-all font-bold text-xs uppercase tracking-widest flex items-center gap-3 group"
+            >
+              <QrCode class="w-5 h-5 text-accent-cyan group-hover:scale-110 transition-transform" />
+              Training List
+            </button>
+          </div>
+
           <!-- Status Toggle -->
           <button 
             v-if="props.project"
@@ -505,6 +747,14 @@ const handleSubmit = async () => {
         </div>
       </div>
     </div>
+
+    <!-- Training Manager Modal -->
+    <TrainingManagerModal 
+      v-if="showTrainingManager"
+      :projectId="props.project?.project_id"
+      :projectName="formData.name"
+      @close="showTrainingManager = false"
+    />
   </Teleport>
 </template>
 

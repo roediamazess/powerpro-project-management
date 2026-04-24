@@ -30,6 +30,8 @@ class PartnerBase(BaseModel):
     sub_area_id: Optional[str] = None
     version_id: Optional[str] = None
     imp_type_id: Optional[str] = None
+    server_information_id: Optional[str] = None
+    server_information_detail: Optional[str] = None
     
     stars: Optional[int] = None
     rooms: Optional[int] = None
@@ -54,6 +56,8 @@ class PartnerUpdate(BaseModel):
     sub_area_id: Optional[str] = None
     version_id: Optional[str] = None
     imp_type_id: Optional[str] = None
+    server_information_id: Optional[str] = None
+    server_information_detail: Optional[str] = None
     stars: Optional[int] = None
     rooms: Optional[int] = None
     outlets: Optional[int] = None

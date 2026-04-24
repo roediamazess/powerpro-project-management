@@ -8,11 +8,12 @@ export interface Project {
   partner: { partner_id: string; name: string }
   type_id: string
   status_id: string
+  status: string
   start_date: string
   end_date: string
   total_days: number
   point_percent: number
-  pics: any[]
+  pic_assignments: any[]
 }
 
 interface ProjectState {

@@ -13,6 +13,54 @@ from app.models.auth import User
 from app.schemas.project import Project as ProjectSchema, ProjectCreate, ProjectUpdate
 from app.api.v1.endpoints.login import get_current_user
 
+# Categorization for Partner Auto-Sync
+VISIT_TYPES = ['IMPLEMENTATION', 'UPGRADE', 'MAINTENANCE', 'RE-TRAINING', 'IH-TRAINING', 'SPEC-REQ']
+PROJECT_TYPES = ['REMOTE-INS', 'OL-TRAINING', 'OTH']
+
+async def sync_partner_operational_data(db: AsyncSession, partner_id: uuid.UUID):
+    """
+    Automatically syncs Partner's last_visit_at and last_project fields
+    based on the latest projects associated with the partner.
+    """
+    # 1. Get Latest Visit Project
+    visit_stmt = (
+        select(Project)
+        .where(Project.partner_id == partner_id, Project.is_deleted == False)
+        .where(Project.type_id.in_(VISIT_TYPES))
+        .order_by(Project.start_date.desc())
+        .limit(1)
+    )
+    v_res = await db.execute(visit_stmt)
+    last_visit = v_res.scalar_one_or_none()
+
+    # 2. Get Latest General Project
+    proj_stmt = (
+        select(Project)
+        .where(Project.partner_id == partner_id, Project.is_deleted == False)
+        .where(Project.type_id.in_(PROJECT_TYPES))
+        .order_by(Project.start_date.desc())
+        .limit(1)
+    )
+    p_res = await db.execute(proj_stmt)
+    last_proj = p_res.scalar_one_or_none()
+
+    # 3. Update Partner
+    partner_stmt = select(Partner).where(Partner.partner_id == partner_id)
+    partner_res = await db.execute(partner_stmt)
+    partner = partner_res.scalar_one_or_none()
+
+    if partner:
+        if last_visit:
+            partner.last_visit_at = last_visit.start_date
+            partner.last_visit_type = last_visit.type_id
+        
+        if last_proj:
+            partner.last_project = last_proj.start_date
+            partner.last_project_type = last_proj.type_id
+        
+        db.add(partner)
+        await db.flush()
+
 router = APIRouter()
 
 @router.get("/", response_model=List[ProjectSchema])
@@ -77,6 +125,10 @@ async def create_project(
             
     await db.commit()
     await db.refresh(db_obj)
+    
+    # 3. Auto-sync partner data
+    await sync_partner_operational_data(db, db_obj.partner_id)
+    await db.commit()
     
     # Reload with relations
     stmt = select(Project).where(Project.project_id == db_obj.project_id).options(
@@ -148,6 +200,10 @@ async def update_project(
     db.add(db_obj)
     await db.commit()
     await db.refresh(db_obj)
+    
+    # Sync partner data
+    await sync_partner_operational_data(db, db_obj.partner_id)
+    await db.commit()
     
     # Reload with relations
     stmt = select(Project).where(Project.project_id == id).options(

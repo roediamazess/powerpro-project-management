@@ -7,7 +7,8 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.models.partner import (
     PartnerType, PartnerStatus, PartnerGroup, PartnerArea, 
-    PartnerSubArea, PartnerSystemVersion, PartnerImplementationType
+    PartnerSubArea, PartnerSystemVersion, PartnerImplementationType,
+    PartnerServerInformation
 )
 from app.models.project import (
     ProjectType, ProjectStatus, ProjectArrangement, ProjectAssignment, ProjectInformation
@@ -37,6 +38,7 @@ async def get_partner_lookups(
     sub_areas = (await db.execute(select(PartnerSubArea).order_by(PartnerSubArea.listindex))).scalars().all()
     versions = (await db.execute(select(PartnerSystemVersion).order_by(PartnerSystemVersion.listindex))).scalars().all()
     imp_types = (await db.execute(select(PartnerImplementationType).order_by(PartnerImplementationType.listindex))).scalars().all()
+    server_info = (await db.execute(select(PartnerServerInformation).order_by(PartnerServerInformation.listindex))).scalars().all()
 
     return {
         "types": [{"id": x.type_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in types],
@@ -46,6 +48,7 @@ async def get_partner_lookups(
         "sub_areas": [{"id": x.sub_area_id, "name": x.name, "area_id": x.area_id, "listindex": x.listindex, "is_active": x.is_active} for x in sub_areas],
         "versions": [{"id": x.version_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in versions],
         "imp_types": [{"id": x.imp_type_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in imp_types],
+        "server_info": [{"id": x.server_information_id, "name": x.name, "listindex": x.listindex, "is_active": x.is_active} for x in server_info],
     }
 
 @router.get("/project")
@@ -206,6 +209,15 @@ async def create_partner_imp_type(schema: LookupCreate, db: AsyncSession = Depen
 @router.put("/partner-imp-types/{id_val}", response_model=Lookup)
 async def update_partner_imp_type(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
     return await update_lookup(db, PartnerImplementationType, "imp_type_id", id_val, schema)
+
+# PARTNER SERVER INFORMATION
+@router.post("/partner-server-info", response_model=Lookup)
+async def create_partner_server_info(schema: LookupCreate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await create_lookup(db, PartnerServerInformation, "server_information_id", schema)
+
+@router.put("/partner-server-info/{id_val}", response_model=Lookup)
+async def update_partner_server_info(id_val: str, schema: LookupUpdate, db: AsyncSession = Depends(get_db), u: User = Depends(get_current_user)):
+    return await update_lookup(db, PartnerServerInformation, "server_information_id", id_val, schema)
 
 # PROJECT TYPES
 @router.post("/project-types", response_model=Lookup)

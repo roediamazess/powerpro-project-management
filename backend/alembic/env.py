@@ -14,6 +14,7 @@ from app.models.project import Project, ProjectPIC, ProjectType, ProjectStatus
 from app.models.task import Task, TaskPriority, TaskStatus
 from app.models.compliance import ComplianceForm, ComplianceItem, ComplianceEntry, ComplianceEntryScore
 from app.models.audit import SystemAuditLog
+from app.models.training import ORTrainingSession, ORTrainingAttendee
 
 config = context.config
 

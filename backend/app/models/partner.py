@@ -26,6 +26,8 @@ class Partner(Base, PowerProBase):
     group_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("partner_groups.group_id"))
     version_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("partner_system_versions.version_id"))
     imp_type_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("partner_implementation_types.imp_type_id"))
+    server_information_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("partner_server_information.server_information_id"))
+    server_information_detail: Mapped[Optional[str]] = mapped_column(String(200))
 
     # Operational Metrics
     stars: Mapped[Optional[int]] = mapped_column(Integer)
@@ -107,6 +109,13 @@ class PartnerSystemVersion(Base):
 class PartnerImplementationType(Base):
     __tablename__ = "partner_implementation_types"
     imp_type_id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    listindex: Mapped[int] = mapped_column(default=0)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+class PartnerServerInformation(Base):
+    __tablename__ = "partner_server_information"
+    server_information_id: Mapped[str] = mapped_column(String(50), primary_key=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     listindex: Mapped[int] = mapped_column(default=0)
     is_active: Mapped[bool] = mapped_column(default=True)

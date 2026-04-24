@@ -24,6 +24,8 @@ const formData = ref({
   sub_area_id: '',
   version_id: '',
   imp_type_id: '',
+  server_information_id: '',
+  server_information_detail: '',
   stars: 0,
   rooms: 0,
   outlets: 0,
@@ -348,6 +350,18 @@ const handleSubmit = async () => {
                     :options="partnerStore.lookups.imp_types" 
                     label="Implementation Protocol"
                   />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-xs font-bold text-surface-400 uppercase tracking-wider">Server Information</label>
+                  <LookupPopup 
+                    v-model="formData.server_information_id" 
+                    :options="partnerStore.lookups.server_info" 
+                    label="Server Information"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <label class="text-xs font-bold text-surface-400 uppercase tracking-wider">Server Detail</label>
+                  <input v-model="formData.server_information_detail" type="text" class="premium-input-field" placeholder="Server detail manual input...">
                 </div>
                 <div class="space-y-2">
                   <label class="text-xs font-bold text-surface-400 uppercase tracking-wider">System Live Date</label>

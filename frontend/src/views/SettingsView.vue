@@ -32,13 +32,14 @@ onMounted(() => {
 const isAdmin = () => authStore.user?.role_id === 'ADMIN'
 
 const partnerConfigTabs = [
-  { id: 'areas', label: 'Primary Areas', icon: Globe },
-  { id: 'sub_areas', label: 'Sub Areas', icon: MapPin },
-  { id: 'groups', label: 'Partner Groups', icon: Layers },
-  { id: 'types', label: 'Partner Types', icon: Users },
-  { id: 'statuses', label: 'Status States', icon: Activity },
-  { id: 'versions', label: 'System Versions', icon: Settings2 },
-  { id: 'imp_types', label: 'Implementation', icon: Database },
+  { id: 'areas', label: 'Area', icon: Globe },
+  { id: 'sub_areas', label: 'Sub Area', icon: MapPin },
+  { id: 'groups', label: 'Group', icon: Layers },
+  { id: 'types', label: 'Type', icon: Users },
+  { id: 'statuses', label: 'Status', icon: Activity },
+  { id: 'versions', label: 'System Version', icon: Settings2 },
+  { id: 'imp_types', label: 'Implementation Type', icon: Database },
+  { id: 'server_info', label: 'Server Information', icon: Database },
 ]
 
 const projectConfigTabs = [
@@ -136,12 +137,13 @@ import { Award } from 'lucide-vue-next'
           </div>
 
           <div class="p-8 flex-1">
-             <LookupManager v-if="activePartnerSubTab === 'areas'" title="Primary Areas" subtitle="Regional classification for partner hotels." :items="settingsStore.lookups.areas" endpoint="partner-areas" />
-             <LookupManager v-if="activePartnerSubTab === 'groups'" title="Partner Groups" subtitle="Ownership clusters and management chains." :items="settingsStore.lookups.groups" endpoint="partner-groups" />
-             <LookupManager v-if="activePartnerSubTab === 'types'" title="Partner Types" subtitle="Classification of business units (Hotel, Resort, etc.)" :items="settingsStore.lookups.types" endpoint="partner-types" />
-             <LookupManager v-if="activePartnerSubTab === 'statuses'" title="Status States" subtitle="Operational lifecycle statuses." :items="settingsStore.lookups.statuses" endpoint="partner-statuses" />
-             <LookupManager v-if="activePartnerSubTab === 'versions'" title="System Versions" subtitle="Active PowerPro software versions." :items="settingsStore.lookups.versions" endpoint="partner-versions" />
-             <LookupManager v-if="activePartnerSubTab === 'imp_types'" title="Implementation" subtitle="Types of implementation projects." :items="settingsStore.lookups.imp_types" endpoint="partner-imp-types" />
+             <LookupManager v-if="activePartnerSubTab === 'areas'" title="Area" subtitle="Regional classification for partner hotels." :items="settingsStore.lookups.areas" endpoint="partner-areas" />
+             <LookupManager v-if="activePartnerSubTab === 'groups'" title="Group" subtitle="Ownership clusters and management chains." :items="settingsStore.lookups.groups" endpoint="partner-groups" />
+             <LookupManager v-if="activePartnerSubTab === 'types'" title="Type" subtitle="Classification of business units (Hotel, Resort, etc.)" :items="settingsStore.lookups.types" endpoint="partner-types" />
+             <LookupManager v-if="activePartnerSubTab === 'statuses'" title="Status" subtitle="Operational lifecycle statuses." :items="settingsStore.lookups.statuses" endpoint="partner-statuses" />
+             <LookupManager v-if="activePartnerSubTab === 'versions'" title="System Version" subtitle="Active PowerPro software versions." :items="settingsStore.lookups.versions" endpoint="partner-versions" />
+             <LookupManager v-if="activePartnerSubTab === 'imp_types'" title="Implementation Type" subtitle="Types of implementation projects." :items="settingsStore.lookups.imp_types" endpoint="partner-imp-types" />
+             <LookupManager v-if="activePartnerSubTab === 'server_info'" title="Server Information" subtitle="Infrastructure and server configuration details." :items="settingsStore.lookups.server_info" endpoint="partner-server-info" />
              
              <LookupManager 
                v-if="activePartnerSubTab === 'sub_areas'" 

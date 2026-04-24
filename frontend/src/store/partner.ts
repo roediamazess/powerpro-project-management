@@ -11,6 +11,17 @@ export interface Partner {
   rooms: number
   outlets: number
   address: string
+  area_id?: string
+  sub_area_id?: string
+  last_visit_at?: string
+  last_visit_type?: string
+  last_project?: string
+  last_project_type?: string
+  version_id?: string
+  imp_type_id?: string
+  server_information_id?: string
+  server_information_detail?: string
+  system_live_at?: string
   contacts: any[]
   updated_at: string
 }
@@ -25,6 +36,7 @@ interface PartnerState {
     sub_areas: any[]
     versions: any[]
     imp_types: any[]
+    server_info: any[]
   }
   isLoading: boolean
   error: string | null
@@ -41,6 +53,7 @@ export const usePartnerStore = defineStore('partner', {
       sub_areas: [],
       versions: [],
       imp_types: [],
+      server_info: [],
     },
     isLoading: false,
     error: null,

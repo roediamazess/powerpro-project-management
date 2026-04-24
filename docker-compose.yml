@@ -34,7 +34,8 @@ services:
       POSTGRES_SERVER: db
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-powerpro_db}
     volumes:
-      - ./backend/app:/app/app # For hot-reloading if needed (optional)
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
 
 
 

@@ -1,4 +1,4 @@
-# Arsitektur & Landasan Deployment (Deployment Foundation) v2 (AI-Enhanced)
+# Arsitektur & Landasan Deployment (Deployment Foundation) v2.7 (AI-Enhanced)
 
 Dokumen ini berisi landasan arsitektur pengembangan, aturan standar operasional internal, dan rencana *deployment* sistem terotomatisasi untuk modul *Project Management, Partner Management, Timeboxing, dan Compliance*. Arsitektur versi terbaru (v2) ini didesain agar kompatibel 100% dan dapat disetir secara otonom oleh **AI Assistant (Google Antigravity Agent Skills)**.
 
@@ -514,5 +514,25 @@ const filteredItems = computed(() => {
 **✅ Efek Visual yang Diharapkan:**
 Pengguna mendapatkan pengalaman pencarian yang intuitif (apa yang dilihat = apa yang bisa dicari) dengan akurasi angka Tab yang presisi dan instan.
 
+### 11.12 UI/UX Interaction & Display Standards (v2.7 Update)
+
+Untuk memastikan pengalaman pengguna yang profesional dan konsisten di seluruh modul, standar berikut **WAJIB** diterapkan:
+
+1.  **Edit Modal Interaction**:
+    - **Trigger**: Modal edit (Form View) hanya boleh dibuka melalui event **`rowDoubleClicked`** pada AG Grid.
+    - **Rationale**: Menghindari terbukanya modal secara tidak sengaja saat pengguna hanya ingin memilih (*highlight*) baris untuk membaca data.
+
+2.  **Human-Readable Labels**:
+    - **Status Column**: Dilarang menampilkan `status_id` mentah (misal: "RUNNING"). Gunakan `cellRenderer` untuk melakukan lookup ke `settingsStore` dan tampilkan Properti `name` (misal: "Running").
+    - **Team Column**: Tampilkan `username` anggota tim menggunakan komponen **Badges/Pills** (aksen Cyan) agar identitas tim terlihat jelas dan rapi.
+
+3.  **Standardized Timeline Format**:
+    - Seluruh kolom yang menyajikan rentang waktu (*Timeline*) wajib menggunakan format tanggal **`dd Mmm yy`** (contoh: `22 Dec 24`).
+    - Gunakan `Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: '2-digit' })` untuk konsistensi.
+
+4.  **Aggressive Status Filtering (Sync Logic)**:
+    - Filter tab status harus menggunakan metode pembersihan string yang agresif: `trim()`, `toUpperCase()`, dan *case-insensitive matching*.
+    - Hal ini menjamin status seperti `TENTATIVE` tetap masuk ke tab `PREPARATION` secara akurat meskipun terdapat perbedaan format penulisan di database.
+
 ---
-*Status: Production Ready v2.6 (Golden Sync & Visual Mapping Certified)*
+*Status: Production Ready v2.7 (Interaction & Display Standards Certified)*

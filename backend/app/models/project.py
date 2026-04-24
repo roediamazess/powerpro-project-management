@@ -48,7 +48,6 @@ class ProjectPIC(Base):
     __tablename__ = "project_pics"
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.project_id"), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"), primary_key=True)
-    pic_role: Mapped[Optional[str]] = mapped_column(String(50))
     arrangement_id: Mapped[str] = mapped_column(String(50), default="SELF")
     assignment_id: Mapped[str] = mapped_column(String(50), default="SELF")
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -73,8 +72,6 @@ class Project(Base, PowerProBase):
     partner_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("partners.partner_id"), nullable=False)
     type_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_types.type_id"))
     status_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_statuses.status_id"))
-    arrangement_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_arrangements.arrangement_id"))
-    assignment_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_assignments.assignment_id"))
     information_id: Mapped[Optional[str]] = mapped_column(String(50), ForeignKey("project_information.information_id"))
     
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -101,15 +98,15 @@ class Project(Base, PowerProBase):
     
     s1_estimation: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     s1_over_days: Mapped[Optional[int]] = mapped_column(Integer)
-    s1_count_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
-    s2_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
-    s3_email_sent: Mapped[Optional[int]] = mapped_column(Integer)
+    s1_count_email_sent: Mapped[Optional[str]] = mapped_column(String(255))
+    s2_email_sent: Mapped[Optional[str]] = mapped_column(String(255))
+    s3_email_sent: Mapped[Optional[str]] = mapped_column(String(255))
     
     pyear: Mapped[Optional[int]] = mapped_column(Integer)
-    pquarter: Mapped[Optional[int]] = mapped_column(Integer)
-    pmonth: Mapped[Optional[int]] = mapped_column(Integer)
-    pweekno: Mapped[Optional[int]] = mapped_column(Integer)
-    pweekofmonth: Mapped[Optional[int]] = mapped_column(Integer)
+    pquarter: Mapped[Optional[str]] = mapped_column(String(20))
+    pmonth: Mapped[Optional[str]] = mapped_column(String(20))
+    pweekno: Mapped[Optional[str]] = mapped_column(String(20))
+    pweekofmonth: Mapped[Optional[str]] = mapped_column(String(20))
     
     created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"))
     updated_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.user_id"))
@@ -120,3 +117,4 @@ class Project(Base, PowerProBase):
     pics: Mapped[List["User"]] = relationship(secondary="project_pics", viewonly=True)
     tasks: Mapped[List["Task"]] = relationship(back_populates="project")
     compliance_entries: Mapped[List["ComplianceEntry"]] = relationship(back_populates="project")
+    training_sessions: Mapped[List["ORTrainingSession"]] = relationship(back_populates="project")
